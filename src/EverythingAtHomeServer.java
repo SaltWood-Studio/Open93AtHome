@@ -18,10 +18,6 @@ public class EverythingAtHomeServer {
         Configuration config = new Configuration();
         config.setHostname(host);
         config.setPort(port);
-        config.setAuthorizationListener(handshakeData -> {
-            String[] array = handshakeData.getHttpHeaders().get("Authorization").split(" ");
-            return new AuthorizationResult(!array[array.length - 1].isBlank());
-        });
 
         // Create a new SocketIOServer instance
         this.ioServer = new SocketIOServer(config);

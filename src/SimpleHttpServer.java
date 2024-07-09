@@ -1,3 +1,4 @@
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.HttpServer;
@@ -6,9 +7,13 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import modules.cluster.ClusterJwt;
 import modules.http.HandlerWrapper;
 import modules.http.Response;
 
+import javax.crypto.SecretKey;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -17,16 +22,28 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.Map;
 
 public class SimpleHttpServer {
     private final int port;
+    private SecretKey key = Jwts.SIG.HS512.key().build();
+    private HttpServer server;
+    public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
 
     public SimpleHttpServer(int port){
         this.port = port;
     }
 
-    public void start() {
+    public void start(){
+        start(false);
+    }
+
+    public void start(boolean forceHttp) {
         try {
+            if (forceHttp){
+                startHttpServer();
+                return;
+            }
             // 尝试启动HTTPS服务器
             startHttpsServer();
         } catch (Exception e) {
@@ -67,7 +84,8 @@ public class SimpleHttpServer {
                 params.setSSLParameters(getSSLContext().getDefaultSSLParameters());
             }
         });
-        createHttpContext(httpsServer);
+        this.server = httpsServer;
+        createHttpContext();
 
         httpsServer.setExecutor(null); // creates a default executor
         httpsServer.start();
@@ -75,16 +93,16 @@ public class SimpleHttpServer {
     }
 
     private void startHttpServer() throws Exception {
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
-        createHttpContext(httpServer);
+        server = HttpServer.create(new InetSocketAddress(this.port), 0);
+        createHttpContext();
 
-        httpServer.setExecutor(null); // creates a default executor
-        httpServer.start();
+        server.setExecutor(null); // creates a default executor
+        server.start();
         System.out.println("HTTP server started on port " + this.port);
     }
 
-    private static void createHttpContext(HttpServer server){
-        server.createContext("/socket.io", new HandlerWrapper(){
+    private void createHttpContext(){
+        this.server.createContext("/socket.io", new HandlerWrapper(){
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
                 // String request = httpExchange.getRequestHeaders().get("Host").get(0).split(":")[0];
@@ -94,11 +112,14 @@ public class SimpleHttpServer {
                 return resp;
             }
         });
-        server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper(){
+        this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper(){
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
+                String id = httpExchange.getRequestURI().getQuery();
+                System.out.println(id);
                 JSONObject object = new JSONObject();
-                object.put("challenge", Utils.generateRandomHexString(32));
+                object.put("challenge", ClusterJwt.generateJwtToken("challenge",
+                                1000 * 60 * 60L, key, ALGORITHM, id).compact());
                 httpExchange.getResponseHeaders().add("Content-Type", "application/json");
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();
@@ -106,11 +127,36 @@ public class SimpleHttpServer {
                 return resp;
             }
         });
-        server.createContext("/openbmclapi-agent/token", new HandlerWrapper(){
+        this.server.createContext("/openbmclapi-agent/token", new HandlerWrapper(){
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
+                JSONObject requestObject = JSON.parseObject(httpExchange.getRequestBody().readAllBytes());
+                String id = requestObject.getString("clusterId");
+                String sign = requestObject.getString("signature");
+                String challenge = requestObject.getString("challenge");
+
+                boolean isValid;
+                try{
+                    Jwts.parser()
+                            .verifyWith(key)
+                            .build()
+                            .parse(challenge);
+                    isValid = true;
+                } catch (Exception e) {
+                    isValid = false;
+                }
+                // TODO: 存储、读取 cluster 数据
+                String realSign = Utils.generateSignature("secret", challenge);
+
+                if (!isValid || !realSign.equals(sign)) {
+                    Response resp = new Response();
+                    resp.responseCode = 401;
+                    return resp;
+                }
+
                 JSONObject object = new JSONObject();
-                object.put("token", Utils.generateRandomHexString(32));
+                ClusterJwt cluster = new ClusterJwt(id, "secret");
+                object.put("token", cluster.generateJwtToken());
                 object.put("ttl", 1000 * 60 * 60 * 24);
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();

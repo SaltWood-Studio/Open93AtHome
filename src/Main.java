@@ -5,7 +5,7 @@ public class Main {
         server.start();
 
         SimpleHttpServer httpServer = new SimpleHttpServer(8080);
-        httpServer.start();
+        httpServer.start(true);
 
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

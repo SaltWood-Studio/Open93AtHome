@@ -1,5 +1,6 @@
 package modules.cluster;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.*;
 
@@ -14,8 +15,8 @@ public class ClusterJwt {
     public Long expiration = 86400L;
     public static final String issuer = "SALTWOOD";
     public String clusterId;
-    public SecretKey key;
-    public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS256;
+    public static SecretKey key = Jwts.SIG.HS512.key().build();
+    public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
 
     public ClusterJwt(String clusterId, String clusterSecret){
         this.clusterId = clusterId;
@@ -32,18 +33,22 @@ public class ClusterJwt {
         claims.put("cluster_id", this.clusterId);
         claims.put("cluster_secret", this.clusterSecret);
 
+        return generateJwtToken(issuer, this.expiration, this.key, ALGORITHM, this.clusterId)
+                .claims(claims)
+                .compact();
+    }
+
+    public static JwtBuilder generateJwtToken(String issuer, Long expiration,
+                                              SecretKey key, SecureDigestAlgorithm algorithm,
+                                              String subject) {
         return Jwts.builder()
                 .header()
-                .add("alg", "HS256")
-                .add("typ", "JWT")
                 .and()
                 .issuer(issuer)
-                .claims(claims)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .subject(this.clusterId)
-                .signWith(this.key, ALGORITHM)
-                .compact();
+                .subject(subject)
+                .signWith(key, algorithm);
     }
 }
