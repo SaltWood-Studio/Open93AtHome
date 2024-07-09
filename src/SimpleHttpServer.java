@@ -1,9 +1,13 @@
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
+import modules.http.HandlerWrapper;
+import modules.http.Response;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
@@ -80,17 +84,38 @@ public class SimpleHttpServer {
     }
 
     private static void createHttpContext(HttpServer server){
-        server.createContext("/openbmclapi-agent/challenge", new HttpHandler() {
+        server.createContext("/socket.io", new HandlerWrapper(){
             @Override
-            public void handle(HttpExchange httpExchange) throws IOException {
-                try {
-                    httpExchange.sendResponseHeaders(418, 32);
-                    OutputStream os = httpExchange.getResponseBody();
-                    os.write(Utils.generateRandomHexString(32).getBytes());
-                    os.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            public Response execute(HttpExchange httpExchange) throws IOException {
+                // String request = httpExchange.getRequestHeaders().get("Host").get(0).split(":")[0];
+                httpExchange.getResponseHeaders().add("Location", "http://localhost:3000/socket.io");
+                Response resp = new Response();
+                resp.responseCode = 302;
+                return resp;
+            }
+        });
+        server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper(){
+            @Override
+            public Response execute(HttpExchange httpExchange) throws IOException {
+                JSONObject object = new JSONObject();
+                object.put("challenge", Utils.generateRandomHexString(32));
+                httpExchange.getResponseHeaders().add("Content-Type", "application/json");
+                Response resp = new Response();
+                resp.bytes = object.toJSONString().getBytes();
+                resp.responseCode = 200;
+                return resp;
+            }
+        });
+        server.createContext("/openbmclapi-agent/token", new HandlerWrapper(){
+            @Override
+            public Response execute(HttpExchange httpExchange) throws IOException {
+                JSONObject object = new JSONObject();
+                object.put("token", Utils.generateRandomHexString(32));
+                object.put("ttl", 1000 * 60 * 60 * 24);
+                Response resp = new Response();
+                resp.bytes = object.toJSONString().getBytes();
+                resp.responseCode = 200;
+                return resp;
             }
         });
     }

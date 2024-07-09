@@ -1,3 +1,5 @@
+package modules.cluster;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.*;
 
