@@ -1,4 +1,7 @@
+import io.jsonwebtoken.Jwts;
+
 import java.security.SecureRandom;import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -36,6 +39,20 @@ public class Utils {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    public static boolean verifyJwt(String jwt, SecretKey key) {
+        boolean isValid;
+        try{
+            Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parse(jwt);
+            isValid = true;
+        } catch (Exception e) {
+            isValid = false;
+        }
+        return isValid;
     }
 }
 

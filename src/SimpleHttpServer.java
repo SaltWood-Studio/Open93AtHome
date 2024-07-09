@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class SimpleHttpServer {
@@ -101,6 +103,16 @@ public class SimpleHttpServer {
         System.out.println("HTTP server started on port " + this.port);
     }
 
+    protected boolean verifyClusterRequest(HttpExchange exchange) throws Exception {
+        String auth = exchange.getRequestHeaders().get("Authorization").stream()
+                .reduce((first, second) -> second).orElse(null);
+        if (auth == null) return false;
+        String jwt = Arrays.stream(auth.split(" ")).reduce((first, second) -> second).orElse(null);
+        boolean isValid = Utils.verifyJwt(jwt, key);
+        if (!isValid) throw new Exception("Invalid JWT");
+        return isValid;
+    }
+
     private void createHttpContext(){
         this.server.createContext("/socket.io", new HandlerWrapper(){
             @Override
@@ -135,16 +147,7 @@ public class SimpleHttpServer {
                 String sign = requestObject.getString("signature");
                 String challenge = requestObject.getString("challenge");
 
-                boolean isValid;
-                try{
-                    Jwts.parser()
-                            .verifyWith(key)
-                            .build()
-                            .parse(challenge);
-                    isValid = true;
-                } catch (Exception e) {
-                    isValid = false;
-                }
+                boolean isValid = Utils.verifyJwt(challenge, key);
                 // TODO: 存储、读取 cluster 数据
                 String realSign = Utils.generateSignature("secret", challenge);
 
@@ -158,6 +161,21 @@ public class SimpleHttpServer {
                 ClusterJwt cluster = new ClusterJwt(id, "secret");
                 object.put("token", cluster.generateJwtToken());
                 object.put("ttl", 1000 * 60 * 60 * 24);
+                Response resp = new Response();
+                resp.bytes = object.toJSONString().getBytes();
+                resp.responseCode = 200;
+                return resp;
+            }
+        });
+        this.server.createContext("/openbmclapi/configuration", new HandlerWrapper(){
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                verifyClusterRequest(httpExchange);
+                JSONObject sync = new JSONObject();
+                sync.put("source", "center");
+                sync.put("concurrency", 10);
+                JSONObject object = new JSONObject();
+                object.put("sync", object);
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();
                 resp.responseCode = 200;
