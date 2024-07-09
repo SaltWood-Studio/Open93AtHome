@@ -9,6 +9,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
@@ -52,18 +53,8 @@ public class SimpleHttpServer {
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(this.port), 0);
-        httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
-            public void configure(HttpsParameters params) {
-                params.setNeedClientAuth(false);
-                params.setCipherSuites(getSSLContext().getDefaultSSLParameters().getCipherSuites());
-                params.setProtocols(getSSLContext().getDefaultSSLParameters().getProtocols());
+        createHttpContext(httpsServer);
 
-                // Get the default parameters
-                params.setSSLParameters(getSSLContext().getDefaultSSLParameters());
-            }
-        });
-
-        httpsServer.createContext("/", new TeapotHandler());
         httpsServer.setExecutor(null); // creates a default executor
         httpsServer.start();
         System.out.println("HTTPS server started on port " + this.port);
@@ -71,23 +62,26 @@ public class SimpleHttpServer {
 
     private void startHttpServer() throws Exception {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
-        httpServer.createContext("/", new TeapotHandler());
+        createHttpContext(httpServer);
+
         httpServer.setExecutor(null); // creates a default executor
         httpServer.start();
         System.out.println("HTTP server started on port " + this.port);
     }
 
-    static class TeapotHandler implements HttpHandler {
-        public void handle(HttpExchange t) {
-            try {
-                String response = "I'm a teapot.";
-                t.sendResponseHeaders(418, response.length());
-                OutputStream os = t.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-            } catch (Exception e) {
-                e.printStackTrace();
+    private static void createHttpContext(HttpServer server){
+        server.createContext("/openbmclapi-agent/challenge", new HttpHandler() {
+            @Override
+            public void handle(HttpExchange httpExchange) throws IOException {
+                try {
+                    httpExchange.sendResponseHeaders(418, 32);
+                    OutputStream os = httpExchange.getResponseBody();
+                    os.write(Utils.generateRandomHexString(32).getBytes());
+                    os.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        });
     }
 }
