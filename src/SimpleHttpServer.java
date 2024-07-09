@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class SimpleHttpServer {
     private final int port;
-    private SecretKey key = Jwts.SIG.HS512.key().build();
+    public static SecretKey key = Jwts.SIG.HS512.key().build();
     private HttpServer server;
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
 
@@ -175,7 +175,7 @@ public class SimpleHttpServer {
                 sync.put("source", "center");
                 sync.put("concurrency", 10);
                 JSONObject object = new JSONObject();
-                object.put("sync", object);
+                object.put("sync", sync);
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();
                 resp.responseCode = 200;
