@@ -1,3 +1,4 @@
+import com.corundumstudio.socketio.AuthorizationResult;
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 
@@ -17,6 +18,10 @@ public class EverythingAtHomeServer {
         Configuration config = new Configuration();
         config.setHostname(host);
         config.setPort(port);
+        config.setAuthorizationListener(handshakeData -> {
+            String[] array = handshakeData.getHttpHeaders().get("Authorization").split(" ");
+            return new AuthorizationResult(!array[array.length - 1].isBlank());
+        });
 
         // Create a new SocketIOServer instance
         this.ioServer = new SocketIOServer(config);
@@ -29,7 +34,7 @@ public class EverythingAtHomeServer {
         this.ioServer.addConnectListener(client -> System.out.println("Client connected: " + client.getSessionId()));
 
         // Event for receiving message from client
-        this.ioServer.addEventListener("my_event", String.class, (client, data, ackRequest) -> {
+        this.ioServer.addEventListener("enable", String.class, (client, data, ackRequest) -> {
             System.out.println("Received data from client: " + data);
             // Optionally, send a response back to the client
             client.sendEvent("response_event", "Data received: " + data);

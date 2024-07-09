@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="corundumstudio.socketio.netty" level="project" />
+    <orderEntry type="library" name="io.jsonwebtoken.jjwt" level="project" />
   </component>
 </module>

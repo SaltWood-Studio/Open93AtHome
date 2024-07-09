@@ -14,8 +14,13 @@ import java.net.InetSocketAddress;
 import java.security.KeyStore;
 
 public class SimpleHttpServer {
+    private final int port;
 
-    public static void main(String[] args) {
+    public SimpleHttpServer(int port){
+        this.port = port;
+    }
+
+    public void start() {
         try {
             // 尝试启动HTTPS服务器
             startHttpsServer();
@@ -30,9 +35,9 @@ public class SimpleHttpServer {
         }
     }
 
-    private static void startHttpsServer() throws Exception {
+    private void startHttpsServer() throws Exception {
         // 加载SSL证书
-        char[] passphrase = "password".toCharArray(); // 证书密码
+        char[] passphrase = new char[0]; // 证书密码
         KeyStore ks = KeyStore.getInstance("PKCS12");
         FileInputStream fis = new FileInputStream("cert.pfx");
         ks.load(fis, passphrase);
@@ -46,7 +51,7 @@ public class SimpleHttpServer {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
-        HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(8443), 0);
+        HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(this.port), 0);
         httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
             public void configure(HttpsParameters params) {
                 params.setNeedClientAuth(false);
@@ -61,15 +66,15 @@ public class SimpleHttpServer {
         httpsServer.createContext("/", new TeapotHandler());
         httpsServer.setExecutor(null); // creates a default executor
         httpsServer.start();
-        System.out.println("HTTPS server started on port 8443");
+        System.out.println("HTTPS server started on port " + this.port);
     }
 
-    private static void startHttpServer() throws Exception {
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
+    private void startHttpServer() throws Exception {
+        HttpServer httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
         httpServer.createContext("/", new TeapotHandler());
         httpServer.setExecutor(null); // creates a default executor
         httpServer.start();
-        System.out.println("HTTP server started on port 8080");
+        System.out.println("HTTP server started on port " + this.port);
     }
 
     static class TeapotHandler implements HttpHandler {
