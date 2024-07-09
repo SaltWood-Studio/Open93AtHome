@@ -53,6 +53,16 @@ public class SimpleHttpServer {
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(this.port), 0);
+        httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+            public void configure(HttpsParameters params) {
+                params.setNeedClientAuth(false);
+                params.setCipherSuites(getSSLContext().getDefaultSSLParameters().getCipherSuites());
+                params.setProtocols(getSSLContext().getDefaultSSLParameters().getProtocols());
+
+                // Get the default parameters
+                params.setSSLParameters(getSSLContext().getDefaultSSLParameters());
+            }
+        });
         createHttpContext(httpsServer);
 
         httpsServer.setExecutor(null); // creates a default executor
