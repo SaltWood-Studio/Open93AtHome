@@ -94,6 +94,10 @@ public class SimpleHttpServer {
         System.out.println("HTTPS server started on port " + this.port);
     }
 
+    public void stop() {
+        server.stop(0);
+    }
+
     private void startHttpServer() throws Exception {
         server = HttpServer.create(new InetSocketAddress(this.port), 0);
         createHttpContext();
@@ -118,7 +122,11 @@ public class SimpleHttpServer {
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
                 // String request = httpExchange.getRequestHeaders().get("Host").get(0).split(":")[0];
+                String query = httpExchange.getRequestURI().getQuery();
                 httpExchange.getResponseHeaders().add("Location", "http://localhost:3000/socket.io");
+                if (!query.isBlank()) {
+                    httpExchange.getResponseHeaders().set("Location", "http://localhost:3000/socket.io?" + query);
+                }
                 Response resp = new Response();
                 resp.responseCode = 302;
                 return resp;

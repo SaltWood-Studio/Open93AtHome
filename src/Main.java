@@ -14,6 +14,7 @@ public class Main {
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.stop();
+            httpServer.stop();
         }));
     }
 }
