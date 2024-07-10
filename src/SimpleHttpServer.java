@@ -1,9 +1,7 @@
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.luben.zstd.Zstd;
 import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsServer;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -110,20 +108,19 @@ public class SimpleHttpServer {
         System.out.println("HTTP server started on port " + this.port);
     }
 
-    protected boolean verifyClusterRequest(HttpExchange exchange) throws Exception {
+    protected void verifyClusterRequest(HttpExchange exchange) throws Exception {
         String auth = exchange.getRequestHeaders().get("Authorization").stream()
                 .reduce((first, second) -> second).orElse(null);
-        if (auth == null) return false;
+        if (auth == null) return;
         String jwt = Arrays.stream(auth.split(" ")).reduce((first, second) -> second).orElse(null);
         boolean isValid = Utils.verifyJwt(jwt, key);
         if (!isValid) throw new Exception("Invalid JWT");
-        return isValid;
     }
 
     private void createHttpContext(){
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper(){
             @Override
-            public Response execute(HttpExchange httpExchange) throws IOException {
+            public Response execute(HttpExchange httpExchange) {
                 String id = httpExchange.getRequestURI().getQuery();
                 System.out.println(id);
                 JSONObject object = new JSONObject();
@@ -148,7 +145,7 @@ public class SimpleHttpServer {
                 // TODO: 存储、读取 cluster 数据
                 String realSign = Utils.generateSignature("secret", challenge);
 
-                if (!isValid || !realSign.equals(sign)) {
+                if (realSign != null && (!isValid || !realSign.equals(sign))) {
                     Response resp = new Response();
                     resp.responseCode = 401;
                     return resp;
