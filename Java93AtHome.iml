@@ -10,5 +10,6 @@
     <orderEntry type="library" name="corundumstudio.socketio.netty" level="project" />
     <orderEntry type="library" name="io.jsonwebtoken.jjwt" level="project" />
     <orderEntry type="library" name="alibaba.fastjson2" level="project" />
+    <orderEntry type="library" name="github.luben.zstd.jni" level="project" />
   </component>
 </module>

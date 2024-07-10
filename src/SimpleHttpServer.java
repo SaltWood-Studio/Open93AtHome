@@ -1,6 +1,7 @@
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.github.luben.zstd.Zstd;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
@@ -9,6 +10,7 @@ import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import modules.AvroEncoder;
 import modules.cluster.ClusterJwt;
 import modules.http.HandlerWrapper;
 import modules.http.Response;
@@ -17,6 +19,7 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -118,20 +121,6 @@ public class SimpleHttpServer {
     }
 
     private void createHttpContext(){
-        this.server.createContext("/socket.io", new HandlerWrapper(){
-            @Override
-            public Response execute(HttpExchange httpExchange) throws IOException {
-                // String request = httpExchange.getRequestHeaders().get("Host").get(0).split(":")[0];
-                String query = httpExchange.getRequestURI().getQuery();
-                httpExchange.getResponseHeaders().add("Location", "http://localhost:3000/socket.io");
-                if (!query.isBlank()) {
-                    httpExchange.getResponseHeaders().set("Location", "http://localhost:3000/socket.io?" + query);
-                }
-                Response resp = new Response();
-                resp.responseCode = 302;
-                return resp;
-            }
-        });
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper(){
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
@@ -187,6 +176,27 @@ public class SimpleHttpServer {
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();
                 resp.responseCode = 200;
+                return resp;
+            }
+        });
+        this.server.createContext("/openbmclapi/files", new HandlerWrapper(){
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                FileRecord[] records = new FileRecord[1];// TODO: read records
+                records[0] = new FileRecord("/path/to/file", "hash", 1L, 0L);
+                AvroEncoder encoder = new AvroEncoder();
+                encoder.setElements(records.length);
+                for (FileRecord record : records) {
+                    encoder.setString(record.path());
+                    encoder.setString(record.hash());
+                    encoder.setLong(record.size());
+                    encoder.setLong(record.mtime());
+                }
+                encoder.byteStream.close();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                outputStream.write(Zstd.compress(encoder.byteStream.toByteArray()));
+                Response resp = new Response();
+                resp.bytes = outputStream.toByteArray();
                 return resp;
             }
         });
