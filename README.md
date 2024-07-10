@@ -3,17 +3,17 @@
 **↑万恶之源**
 
 ## 简介
-这是一个类似于[OpenBMCLAPI](https://github.com/bangbang93/openbmclapi)**主控端**的分发文件项目<br>
-不过分发的是**OpenBMCLAPI群内的梗图**，[在这里](https://github.com/Mxmilu666/bangbang93HUB)可以找到所有的梗图
+这是一个类似于 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) **主控端**的分发文件项目<br>
+不过分发的是 **OpenBMCLAPI 群内的梗图**，[在这里](https://github.com/Mxmilu666/bangbang93HUB)可以找到所有的梗图
 ## 部署
 此项目正在努力开发中...
 ## 调试
-1. 将此项目git到本地
-2. 使用Visual Studio打开解决方案(.sln)
+1. 将此项目 `git clone` 到本地
+2. 使用 **IntelliJ IDEA** 打开项目
 3. 愉快的开发吧🎉
 ``` shell
 git clone https://github.com/SaltWood-Studio/Open93AtHome.git
 cd Open93AtHome
 ```
 ### 贡献
-提交PR前请确保你的代码至少经过编译测试
+提交 PR 前请确保你的代码至少经过编译测试
