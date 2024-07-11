@@ -1,26 +1,27 @@
-import com.corundumstudio.socketio.AuthorizationResult;
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 
 public class EverythingAtHomeServer {
     protected SocketIOServer ioServer;
+    protected SimpleHttpServer httpServer;
 
     public EverythingAtHomeServer(){
-        this(3000);
+        this(3000, 8080);
     }
 
-    public EverythingAtHomeServer(int port){
-        this("", port);
+    public EverythingAtHomeServer(int socketioPort, int httpPort){
+        this("", socketioPort, httpPort);
     }
 
-    public EverythingAtHomeServer(String host, int port) {
+    public EverythingAtHomeServer(String host, int socketioPort, int httpPort) {
         // Configuration for the server
         Configuration config = new Configuration();
         config.setHostname(host);
-        config.setPort(port);
+        config.setPort(socketioPort);
 
         // Create a new SocketIOServer instance
         this.ioServer = new SocketIOServer(config);
+        this.httpServer = new SimpleHttpServer(httpPort);
 
         this.addListeners();
     }
@@ -43,13 +44,16 @@ public class EverythingAtHomeServer {
 
     public void start(){
         // Start the server
+        httpServer.start(true);
         ioServer.start();
-        System.out.println("Socket.io server started on port 3000");
+        System.out.println("EverythingAtHome server started.");
+        System.out.println("Socket.IO server started on port " + this.ioServer.getConfiguration().getPort());
     }
 
     public void stop(){
         // Stop the server
+        httpServer.stop();
         ioServer.stop();
-        System.out.println("Socket.io server stopped");
+        System.out.println("EverythingAtHome server stopped");
     }
 }

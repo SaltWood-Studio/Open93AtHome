@@ -179,15 +179,15 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi/files", new HandlerWrapper(){
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                FileRecord[] records = new FileRecord[1];// TODO: read records
-                records[0] = new FileRecord("/path/to/file", "hash", 1L, 0L);
+                File[] files = new File[1];// TODO: read records
+                files[0] = new File("/path/to/file", "hash", 1L, 0L);
                 AvroEncoder encoder = new AvroEncoder();
-                encoder.setElements(records.length);
-                for (FileRecord record : records) {
-                    encoder.setString(record.path());
-                    encoder.setString(record.hash());
-                    encoder.setLong(record.size());
-                    encoder.setLong(record.mtime());
+                encoder.setElements(files.length);
+                for (File file : files) {
+                    encoder.setString(file.path);
+                    encoder.setString(file.hash);
+                    encoder.setLong(file.size);
+                    encoder.setLong(file.lastModified);
                 }
                 encoder.byteStream.close();
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

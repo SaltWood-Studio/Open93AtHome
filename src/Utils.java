@@ -1,11 +1,13 @@
 import io.jsonwebtoken.Jwts;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 public class Utils {
     public static String generateRandomHexString(int length) {
@@ -53,6 +55,29 @@ public class Utils {
             isValid = false;
         }
         return isValid;
+    }
+    
+    public static String toUrlSafeBase64String(String b) {
+        return b.replace('/', '_').replace('+', '-').replace("=", "");
+    }
+    
+    public static String toUrlSafeBase64String(byte[] b) {
+        return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-').replace("=", "");
+    }
+    
+    public static String getSign(File file, Cluster cluster) {
+        MessageDigest sha1 = null;
+        try {
+            sha1 = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e1) {
+            e1.printStackTrace();
+            return null;
+        }
+        long timestamp = System.currentTimeMillis() / 10;
+        String e = Long.toString(timestamp, 36);
+        byte[] signBytes = sha1.digest((cluster.secret + file.hash + e).getBytes());
+        String sign = toUrlSafeBase64String(signBytes);
+        return "?s=" + sign + "&e=" + e + "&name=" + file.getName();
     }
 }
 
