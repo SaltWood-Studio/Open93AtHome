@@ -1,27 +1,28 @@
 import io.jsonwebtoken.Jwts;
 
-import java.security.MessageDigest;
-import java.security.SecureRandom;import javax.crypto.Mac;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 public class Utils {
     public static String generateRandomHexString(int length) {
         SecureRandom secureRandom = new SecureRandom();
         StringBuilder hexString = new StringBuilder();
-
+        
         for (int i = 0; i < length; i++) {
             int randomNumber = secureRandom.nextInt(16);
             hexString.append(Integer.toHexString(randomNumber));
         }
-
+        
         return hexString.toString();
     }
-
+    
     public static String generateSignature(String clusterSecret, String challenge) {
         try {
             Mac sha256Hmac = Mac.getInstance("HmacSHA256");
@@ -34,7 +35,7 @@ public class Utils {
             return null;
         }
     }
-
+    
     public static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
@@ -42,10 +43,10 @@ public class Utils {
         }
         return sb.toString();
     }
-
+    
     public static boolean verifyJwt(String jwt, SecretKey key) {
         boolean isValid;
-        try{
+        try {
             Jwts.parser()
                     .verifyWith(key)
                     .build()
@@ -57,16 +58,12 @@ public class Utils {
         return isValid;
     }
     
-    public static String toUrlSafeBase64String(String b) {
-        return b.replace('/', '_').replace('+', '-').replace("=", "");
-    }
-    
     public static String toUrlSafeBase64String(byte[] b) {
         return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-').replace("=", "");
     }
     
     public static String getSign(File file, Cluster cluster) {
-        MessageDigest sha1 = null;
+        MessageDigest sha1;
         try {
             sha1 = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException e1) {

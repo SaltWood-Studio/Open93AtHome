@@ -13,7 +13,8 @@ public class File {
         this.lastModified = mtime;
     }
     
-    public String getName(){
-        return Arrays.stream(this.path.split("/")).reduce((first, second) -> second).get();
+    public String getName() {
+        String[] paths = this.path.split("/");
+        return paths[paths.length - 1];
     }
 }
