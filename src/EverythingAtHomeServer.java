@@ -30,10 +30,11 @@ public class EverythingAtHomeServer {
         this.ioServer.addConnectListener(client -> System.out.println("Client connected: " + client.getSessionId()));
 
         // Event for receiving message from client
-        this.ioServer.addEventListener("enable", String.class, (client, data, ackRequest) -> {
+        this.ioServer.addEventListener("enable", Object.class, (client, data, ackRequest) -> {
             System.out.println("Received data from client: " + data);
-            // Optionally, send a response back to the client
-            client.sendEvent("response_event", "Data received: " + data);
+            if (ackRequest.isAckRequested()){
+                ackRequest.sendAckData("enabled");
+            }
         });
 
         // Event for client disconnect
