@@ -1,3 +1,4 @@
+import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 
 import javax.crypto.Mac;
@@ -56,6 +57,18 @@ public class Utils {
             isValid = false;
         }
         return isValid;
+    }
+    
+    public static String decodeJwt(String jwt, SecretKey key, String header) {
+        try {
+            Jwt j = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parse(jwt);
+            return j.getHeader().get(header).toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     public static String toUrlSafeBase64String(byte[] b) {

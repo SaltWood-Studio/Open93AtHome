@@ -1,8 +1,12 @@
 import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -98,10 +102,28 @@ public class MasterControlServer {
         Cluster cluster = this.clusters.get(id);
         if (cluster == null) return false;
         try {
+            Runnable[] runnables = new Runnable[8];
             for (int i = 0; i < 8; i++) {
                 File file = this.files[new Random().nextInt(files.length)];
                 String url = requestDownload(file, cluster);
-                //url =
+                Runnable lambda = () -> {
+                    try {
+                        Request request = new Request.Builder()
+                                .url(url)
+                                .addHeader("User-Agent", "93@home-ctrl/1.0")
+                                .build();
+                        OkHttpClient client = new OkHttpClient();
+                        Response response = client.newCall(request).execute();
+                        file.compareHash(response.body().bytes());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                };
+                runnables[i] = lambda;
+            }
+            boolean isValid = Arrays.stream(sharedData.executor.getResult(runnables)).allMatch(result -> (boolean) result);
+            if (isValid){
+                this.onlineClusters.add(cluster);
             }
         } catch (Exception e) {
             return false;

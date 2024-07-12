@@ -24,7 +24,7 @@ public class ClusterJwt {
     }
     
     public static JwtBuilder generateJwtToken(String issuer, Long expiration,
-                                              SecretKey key, SecureDigestAlgorithm<? super javax.crypto.SecretKey,?> algorithm,
+                                              SecretKey key, SecureDigestAlgorithm<? super javax.crypto.SecretKey, ?> algorithm,
                                               String subject) {
         return Jwts.builder()
                 .header()
