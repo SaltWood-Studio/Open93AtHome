@@ -13,6 +13,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.util.Arrays;
@@ -141,19 +142,25 @@ public class SimpleHttpServer {
                 String realSign = Utils.generateSignature("secret", challenge);
                 
                 if (realSign != null && (!isValid || !realSign.equals(sign))) {
-                    Response resp = new Response();
-                    resp.responseCode = 401;
-                    return resp;
+                    httpExchange.sendResponseHeaders(401, 0);
+                    return null;
                 }
                 
                 JSONObject object = new JSONObject();
-                ClusterJwt cluster = new ClusterJwt(id, "secret");
+                Cluster c = sharedData.masterControlServer.clusters.get(id);
+                if (c == null) {
+                    httpExchange.sendResponseHeaders(404, 0);
+                    return null;
+                }
+                ClusterJwt cluster = new ClusterJwt(id, c.secret);
                 object.put("token", cluster.generateJwtToken());
                 object.put("ttl", 1000 * 60 * 60 * 24);
-                Response resp = new Response();
-                resp.bytes = object.toJSONString().getBytes();
-                resp.responseCode = 200;
-                return resp;
+                byte[] bytes = object.toJSONString().getBytes();
+                httpExchange.sendResponseHeaders(200, bytes.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(bytes);
+                os.close();
+                return null;
             }
         });
         this.server.createContext("/openbmclapi/configuration", new HandlerWrapper() {
@@ -177,7 +184,9 @@ public class SimpleHttpServer {
                 verifyClusterRequest(httpExchange);
                 byte[] bytes = sharedData.masterControlServer.getAvroBytes();
                 httpExchange.sendResponseHeaders(200, bytes.length);
-                httpExchange.getResponseBody().write(bytes);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(bytes);
+                os.close();
                 return null;
             }
         });
