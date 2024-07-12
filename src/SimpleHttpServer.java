@@ -114,6 +114,27 @@ public class SimpleHttpServer {
     }
     
     private void createHttpContext() {
+        this.server.createContext("/", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                if (sharedData.masterControlServer.dictionary.get(httpExchange.getRequestURI().getPath()) == null) {
+                    byte[] bytes = "The requested url was not found on the server.".getBytes();
+                    httpExchange.sendResponseHeaders(404, bytes.length);
+                    httpExchange.getResponseBody().write(bytes);
+                    return null;
+                }
+                String url = sharedData.masterControlServer.requestDownload(httpExchange.getRequestURI().getPath());
+                if (url == null) {
+                    byte[] bytes = "Service unavailable.".getBytes();
+                    httpExchange.sendResponseHeaders(503, bytes.length);
+                    httpExchange.getResponseBody().write(bytes);
+                } else {
+                    httpExchange.getResponseHeaders().set("Location", url);
+                    httpExchange.sendResponseHeaders(302, 0);
+                }
+                return null;
+            }
+        });
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) {
@@ -136,24 +157,22 @@ public class SimpleHttpServer {
                 String id = requestObject.getString("clusterId");
                 String sign = requestObject.getString("signature");
                 String challenge = requestObject.getString("challenge");
+                Cluster cluster = sharedData.masterControlServer.clusters.get(id);
+                if (cluster == null) {
+                    httpExchange.sendResponseHeaders(404, 0);
+                    return null;
+                }
                 
                 boolean isValid = Utils.verifyJwt(challenge, key);
-                // TODO: 存储、读取 cluster 数据
-                String realSign = Utils.generateSignature("secret", challenge);
-                
+                String realSign = Utils.generateSignature(cluster.secret, challenge);
                 if (realSign != null && (!isValid || !realSign.equals(sign))) {
                     httpExchange.sendResponseHeaders(401, 0);
                     return null;
                 }
                 
                 JSONObject object = new JSONObject();
-                Cluster c = sharedData.masterControlServer.clusters.get(id);
-                if (c == null) {
-                    httpExchange.sendResponseHeaders(404, 0);
-                    return null;
-                }
-                ClusterJwt cluster = new ClusterJwt(id, c.secret);
-                object.put("token", cluster.generateJwtToken());
+                ClusterJwt jwt = new ClusterJwt(id, cluster.secret);
+                object.put("token", jwt.generateJwtToken());
                 object.put("ttl", 1000 * 60 * 60 * 24);
                 byte[] bytes = object.toJSONString().getBytes();
                 httpExchange.sendResponseHeaders(200, bytes.length);
@@ -187,21 +206,6 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(bytes);
                 os.close();
-                return null;
-            }
-        });
-        this.server.createContext("/", new HandlerWrapper() {
-            @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
-                String url = sharedData.masterControlServer.requestDownload(httpExchange.getRequestURI().toString());
-                if (url == null) {
-                    byte[] bytes = "The requested url was not found on the server.".getBytes();
-                    httpExchange.sendResponseHeaders(404, bytes.length);
-                    httpExchange.getResponseBody().write(bytes);
-                } else {
-                    httpExchange.getResponseHeaders().set("Location", url);
-                    httpExchange.sendResponseHeaders(302, 0);
-                }
                 return null;
             }
         });

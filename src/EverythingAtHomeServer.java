@@ -2,6 +2,7 @@ import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import modules.cluster.ClusterJwt;
 
+import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EverythingAtHomeServer {
@@ -33,11 +34,12 @@ public class EverythingAtHomeServer {
     private void addListeners() {
         // Event for client connection
         this.ioServer.addConnectListener(client -> {
-            if (client.getHandshakeData().getAuthToken() == null) {
+            String token = ((LinkedHashMap<String, String>)client.getHandshakeData().getAuthToken()).get("token");
+            if (client.getHandshakeData().getAuthToken() == null || token == null || token.isEmpty()) {
                 client.disconnect();
                 return;
             } else {
-                String id = Utils.decodeJwt(client.getHandshakeData().getAuthToken().toString(), ClusterJwt.key, "cluster_id");
+                String id = Utils.decodeJwt(token, ClusterJwt.key, "cluster_id");
                 if (id == null || this.sharedData.masterControlServer.clusters.get(id) == null) {
                     client.disconnect();
                     return;

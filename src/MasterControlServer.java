@@ -76,6 +76,7 @@ public class MasterControlServer {
             File file = this.dictionary.get(path);
             // 选择一个节点
             Cluster cluster = chooseOneCluster();
+            if (cluster == null) return null;
             return requestDownload(file, cluster);
         } else {
             return null;
@@ -94,6 +95,7 @@ public class MasterControlServer {
     public Cluster chooseOneCluster() {
         // 从 this.onlineClusters 中随机选择一个并返回
         synchronized (this.onlineClusters) {
+            if (this.onlineClusters.size() == 0) return null;
             return this.onlineClusters.get(new Random().nextInt(this.onlineClusters.size()));
         }
     }

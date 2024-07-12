@@ -1,5 +1,6 @@
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.impl.DefaultClaims;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -65,7 +66,7 @@ public class Utils {
                     .verifyWith(key)
                     .build()
                     .parse(jwt);
-            return j.getHeader().get(header).toString();
+            return ((DefaultClaims)j.getPayload()).get(header).toString();
         } catch (Exception e) {
             return null;
         }
