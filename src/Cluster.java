@@ -3,7 +3,6 @@ public class Cluster {
     public String secret;
     public String name;
     public int bandwidth;
-    public boolean isOnline;
     public String ip;
     public int port;
     

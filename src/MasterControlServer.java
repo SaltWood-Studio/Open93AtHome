@@ -92,7 +92,7 @@ public class MasterControlServer {
         // 为选择到的节点加上流量
         this.clusterTraffics.put(cluster.id, this.clusterTraffics.get(cluster) + file.size);
         if (sign == null) return null;
-        return "https://" + cluster.ip + ":" + this.clusters.get(cluster).port + "/download/" + file.hash + sign;
+        return "http://" + cluster.ip + ":" + this.clusters.get(cluster).port + "/download/" + file.hash + sign;
     }
     
     public Cluster chooseOneCluster() {
