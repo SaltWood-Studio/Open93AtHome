@@ -54,3 +54,6 @@ hs_err_pid*
 replay_pid*
 
 cert*
+
+cluster.dat
+files.dat

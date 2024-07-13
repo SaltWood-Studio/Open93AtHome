@@ -25,15 +25,15 @@ public class ClusterJwt {
     
     public static JwtBuilder generateJwtToken(String issuer, Long expiration,
                                               SecretKey key, SecureDigestAlgorithm<? super javax.crypto.SecretKey, ?> algorithm,
-                                              String subject) {
+                                              String id) {
         return Jwts.builder()
-                .header()
+                .claims()
+                .add("cluster_id", id)
                 .and()
                 .issuer(issuer)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .subject(subject)
                 .signWith(key, algorithm);
     }
     

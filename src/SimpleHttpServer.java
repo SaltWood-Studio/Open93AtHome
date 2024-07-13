@@ -178,7 +178,7 @@ public class SimpleHttpServer {
                     return null;
                 }
                 String realSign = Utils.generateSignature(cluster.secret, challenge);
-                if (realSign != null || !realSign.equals(sign)) {
+                if (realSign == null || !realSign.equals(sign)) {
                     httpExchange.sendResponseHeaders(401, 0);
                     return null;
                 }
