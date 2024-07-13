@@ -128,9 +128,23 @@ public class SimpleHttpServer {
                 }
                 String url = sharedData.masterControlServer.requestDownload(httpExchange.getRequestURI().getPath());
                 if (url == null) {
-                    byte[] bytes = "Service unavailable.".getBytes();
-                    httpExchange.sendResponseHeaders(503, bytes.length);
-                    httpExchange.getResponseBody().write(bytes);
+                    try {
+                        // 主控给文件
+                        FileInputStream fis = new FileInputStream("./files" + sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath()).path);
+                        OutputStream stream = httpExchange.getResponseBody();
+                        // 发送文件
+                        byte[] buffer = new byte[2048];
+                        int len;
+                        while ((len = fis.read(buffer)) > 0) {
+                            stream.write(buffer, 0, len);
+                        }
+                        return null;
+                    } catch (Exception ex) {
+                        byte[] bytes = "Service unavailable.".getBytes();
+                        httpExchange.sendResponseHeaders(503, bytes.length);
+                        httpExchange.getResponseBody().write(bytes);
+                        return null;
+                    }
                 } else {
                     httpExchange.getResponseHeaders().set("Location", url);
                     httpExchange.sendResponseHeaders(302, 0);
