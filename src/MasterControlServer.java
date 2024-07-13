@@ -5,35 +5,35 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MasterControlServer {
-    public final ConcurrentHashMap<String, File> dictionary;
+    public final ConcurrentHashMap<String, FileObject> dictionary;
     public final ConcurrentHashMap<String, Long> clusterTraffics;
     public final ConcurrentHashMap<String, Cluster> clusters;
     public final ArrayList<Cluster> onlineClusters;
     public SharedData sharedData;
-    private File[] files;
     private byte[] avroBytes;
     
     public MasterControlServer() {
-        this.avroBytes = new byte[0];
-        this.files = new File[0];
+        this.avroBytes = new byte[1];
         this.dictionary = new ConcurrentHashMap<>();
         this.clusters = new ConcurrentHashMap<>();
         this.clusterTraffics = new ConcurrentHashMap<>();
         this.onlineClusters = new ArrayList<>();
     }
     
-    public File[] getFiles() {
-        return this.files;
+    public List<FileObject> getFiles() {
+        return this.sharedData.fileStorageHelper.elements;
     }
     
-    public void setFiles(File[] files) throws IOException {
-        this.files = files;
+    public void setFiles(List<FileObject> files) throws IOException {
+        this.sharedData.fileStorageHelper.elements = files;
+        update();
+    }
+    
+    public void update() throws IOException {
         updateDictionary();
         refreshAvroBytes();
     }
@@ -41,7 +41,7 @@ public class MasterControlServer {
     public void updateDictionary() {
         synchronized (this.dictionary) {
             this.dictionary.clear();
-            for (File file : files) {
+            for (FileObject file : this.sharedData.fileStorageHelper.elements) {
                 this.dictionary.put(file.path, file);
             }
         }
@@ -55,9 +55,9 @@ public class MasterControlServer {
     
     public void refreshAvroBytes() throws IOException {
         AvroEncoder encoder = new AvroEncoder();
-        synchronized (this.files) {
-            encoder.setElements(files.length);
-            for (File file : files) {
+        synchronized (this.sharedData.fileStorageHelper.elements) {
+            encoder.setElements(this.sharedData.fileStorageHelper.elements.size());
+            for (FileObject file : this.sharedData.fileStorageHelper.elements) {
                 encoder.setString(file.path);
                 encoder.setString(file.hash);
                 encoder.setLong(file.size);
@@ -73,7 +73,7 @@ public class MasterControlServer {
     public String requestDownload(String path) {
         // 如果 this.files 中有 path 相同的文件
         if (this.dictionary.containsKey(path)) {
-            File file = this.dictionary.get(path);
+            FileObject file = this.dictionary.get(path);
             // 选择一个节点
             Cluster cluster = chooseOneCluster();
             if (cluster == null) return null;
@@ -83,7 +83,7 @@ public class MasterControlServer {
         }
     }
     
-    public String requestDownload(File file, Cluster cluster) {
+    public String requestDownload(FileObject file, Cluster cluster) {
         // 为这个请求计算 sign
         String sign = Utils.getSign(file, cluster);
         // 为选择到的节点加上流量
@@ -105,7 +105,7 @@ public class MasterControlServer {
         if (cluster == null) throw new Exception("cluster not found");
         Runnable[] runs = new Runnable[8];
         for (int i = 0; i < 8; i++) {
-            File file = this.files[new Random().nextInt(files.length)];
+            FileObject file = getFiles().get(new Random().nextInt(getFiles().size()));
             String url = requestDownload(file, cluster);
             Runnable lambda = () -> {
                 try {

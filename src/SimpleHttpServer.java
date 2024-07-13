@@ -11,10 +11,12 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.Arrays;
 
@@ -105,8 +107,7 @@ public class SimpleHttpServer {
     }
     
     protected void verifyClusterRequest(HttpExchange exchange) throws Exception {
-        String auth = exchange.getRequestHeaders().get("Authorization").stream()
-                .reduce((first, second) -> second).orElse(null);
+        String auth = Utils.tryGetInDictionary(exchange.getRequestHeaders(), "Authorization");
         if (auth == null) return;
         String jwt = Arrays.stream(auth.split(" ")).reduce((first, second) -> second).orElse(null);
         boolean isValid = Utils.verifyJwt(jwt, key);
@@ -197,6 +198,33 @@ public class SimpleHttpServer {
                 return resp;
             }
         });
+        this.server.createContext("/openbmclapi/download", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                verifyClusterRequest(httpExchange);
+                String hash = null;
+                if (httpExchange.getRequestURI().getPath().startsWith("/openbmclapi/download/")) {
+                    hash = httpExchange.getRequestURI().getPath().substring("/openbmclapi/download/".length());
+                }
+                if (hash == null) {
+                    httpExchange.sendResponseHeaders(404, 0);
+                    return null;
+                }
+                FileObject file = sharedData.masterControlServer.dictionary.get(hash);
+                if (file == null) {
+                    httpExchange.sendResponseHeaders(404, 0);
+                    return null;
+                }
+                httpExchange.sendResponseHeaders(200, file.size);
+                OutputStream stream = httpExchange.getResponseBody();
+                FileInputStream fis = new FileInputStream(Path.of("./files", file.path).toString());
+                byte[] bytes = new byte[2048];
+                while (fis.read(bytes) > 0){
+                    stream.write(bytes);
+                }
+                return null;
+            }
+        });
         this.server.createContext("/openbmclapi/files", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
@@ -209,5 +237,148 @@ public class SimpleHttpServer {
                 return null;
             }
         });
+        this.server.createContext("/93AtHome/new_cluster", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
+                if (!isInternalRequest) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                JSONObject object = JSONObject.parseObject(request);
+                String name = (String) object.get("name");
+                int bandwidth = (int) object.get("bandwidth");
+                String id = Utils.generateRandomHexString(24);
+                String secret = Utils.generateRandomHexString(32);
+                Cluster cluster = new Cluster(id, secret, name, bandwidth);
+                sharedData.masterControlServer.clusters.put(id, cluster);
+                sharedData.clusterStorageHelper.elements.add(cluster);
+                JSONObject response = new JSONObject();
+                response.put("id", id);
+                response.put("secret", secret);
+                response.put("name", name);
+                response.put("bandwidth", bandwidth);
+                byte[] message = response.toJSONString().getBytes();
+                saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/add_cluster", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
+                if (!isInternalRequest) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                JSONObject object = JSONObject.parseObject(request);
+                String name = (String) object.get("name");
+                int bandwidth = (int) object.get("bandwidth");
+                String id = (String) object.get("id");
+                String secret = (String) object.get("secret");
+                Cluster cluster = new Cluster(id, secret, name, bandwidth);
+                sharedData.masterControlServer.clusters.put(id, cluster);
+                sharedData.clusterStorageHelper.elements.add(cluster);
+                JSONObject response = new JSONObject();
+                response.put("id", id);
+                response.put("secret", secret);
+                response.put("name", name);
+                response.put("bandwidth", bandwidth);
+                byte[] message = response.toJSONString().getBytes();
+                saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/add_file", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
+                if (!isInternalRequest) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                JSONObject object = JSONObject.parseObject(request);
+                String path = (String) object.get("path");
+                String hash = null;
+                String filePath = Path.of("./files", path).toString();
+                try (FileInputStream fis = new FileInputStream(filePath)){
+                    hash = FileObject.computeHash(fis);
+                } catch (Exception e) {
+                    throw e;
+                }
+                Long size = new File(filePath).length();
+                Long lastModified = 0L;
+                sharedData.fileStorageHelper.elements.add(new FileObject(path, hash, size, lastModified));
+                sharedData.masterControlServer.update();
+                saveAll();
+                JSONObject response = new JSONObject();
+                response.put("path", path);
+                response.put("hash", hash);
+                response.put("size", size);
+                response.put("lastModified", lastModified);
+                byte[] message = response.toJSONString().getBytes();
+                saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/remove_file", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
+                if (!isInternalRequest) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                JSONObject object = JSONObject.parseObject(request);
+                String path = (String) object.get("path");
+                boolean removed = sharedData.fileStorageHelper.elements.removeIf(fileObject -> fileObject.path.equals(path));
+                sharedData.masterControlServer.update();
+                saveAll();
+                JSONObject response = new JSONObject();
+                response.put("path", path);
+                response.put("isRemoved", removed);
+                byte[] message = response.toJSONString().getBytes();
+                saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/list_file", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
+                if (!isInternalRequest) {
+                    httpExchange.close();
+                }
+                String response = JSON.toJSONString(sharedData.fileStorageHelper.elements);
+                byte[] message = response.getBytes();
+                saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+    }
+    
+    public void saveAll(){
+        sharedData.clusterStorageHelper.save();
+        sharedData.fileStorageHelper.save();
     }
 }

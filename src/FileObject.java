@@ -1,13 +1,14 @@
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
 
-public class File {
+public class FileObject {
     public String path;
     public String hash;
     public long size;
     public long lastModified;
     
-    public File(String path, String hash, long size, long mtime) {
+    public FileObject(String path, String hash, long size, long mtime) {
         this.path = path;
         this.hash = hash;
         this.size = size;
@@ -40,7 +41,27 @@ public class File {
         }
     }
     
-    public String computeHash(byte[] data) {
+    public static String computeHash(InputStream stream) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = stream.read(buffer)) != -1) {
+                md.update(buffer, 0, len);
+            }
+            byte[] hashBytes = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static String computeHash(byte[] data) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             md.update(data);

@@ -1,15 +1,18 @@
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StorageHelper<T> {
-    public List<T> elements = new ArrayList<>();
+    private final Class<T> tClass;
     private String name;
+    public List<T> elements = new ArrayList<>();
     
-    public StorageHelper(String name) {
+    public StorageHelper(String name, Class<T> tClass) {
         this.name = name;
+        this.tClass = tClass;
     }
     
     public void save(){
@@ -30,6 +33,9 @@ public class StorageHelper<T> {
         } catch (IOException e) {
             return;
         }
-        this.elements = JSON.parseObject(bytes, ArrayList.class);
+        List<JSONObject> objects = JSON.parseObject(bytes, ArrayList.class);
+        for (JSONObject element : objects){
+            this.elements.add(element.toJavaObject(this.tClass));
+        }
     }
 }

@@ -13,7 +13,7 @@ public class EverythingAtHomeServer {
     private final ConcurrentHashMap<String, String> sessions;
     
     public EverythingAtHomeServer() {
-        this(3000);
+        this(9300);
     }
     
     public EverythingAtHomeServer(int socketioPort) {
@@ -55,6 +55,14 @@ public class EverythingAtHomeServer {
         
         // Event for receiving message from client
         this.ioServer.addEventListener("enable", Object.class, (client, data, ackRequest) -> {
+            Dictionary<String, Object> dictionary = (Dictionary<String, Object>) data;
+            String host = (dictionary.get("host") != null) ? dictionary.get("host").toString() : "";
+            int port = (dictionary.get("port") != null) ? Integer.parseInt(dictionary.get("port").toString()) : 0;
+            Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
+            cluster.ip = host;
+            cluster.port = port;
+            sharedData.masterControlServer.clusters.put(cluster.id, cluster);
+            sharedData.clusterStorageHelper.save();
             boolean enabled = false;
             Exception exception = null;
             try {
