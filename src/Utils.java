@@ -10,7 +10,11 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Base64;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class Utils {
     public static String generateRandomHexString(int length) {
@@ -89,6 +93,13 @@ public class Utils {
         byte[] signBytes = sha1.digest((cluster.secret + file.hash + e).getBytes());
         String sign = toUrlSafeBase64String(signBytes);
         return "?s=" + sign + "&e=" + e + "&name=" + file.getName();
+    }
+    
+    public static String getISOTime(){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String timestamp = df.format(new Date());
+        return timestamp;
     }
 }
 

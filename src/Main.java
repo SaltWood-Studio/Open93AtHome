@@ -1,3 +1,5 @@
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import modules.cluster.ClusterJwt;
 
 import java.io.IOException;
@@ -13,6 +15,8 @@ public class Main {
         files[0] = new File("/1/1", "0000000000000000000000000000000000000000", 1, 1);
         files[1] = new File("/2/2", "0000000000000000000000000000000000000000", 2, 2);
         
+        
+        if (1 == 1) return;
         
         masterServer.setFiles(files);
         masterServer.clusters.put(cluster.id, cluster);

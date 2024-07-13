@@ -100,36 +100,30 @@ public class MasterControlServer {
         }
     }
     
-    public boolean tryEnable(String id) {
+    public void tryEnable(String id) throws Exception {
         Cluster cluster = this.clusters.get(id);
-        if (cluster == null) return false;
-        try {
-            Runnable[] runnables = new Runnable[8];
-            for (int i = 0; i < 8; i++) {
-                File file = this.files[new Random().nextInt(files.length)];
-                String url = requestDownload(file, cluster);
-                Runnable lambda = () -> {
-                    try {
-                        Request request = new Request.Builder()
-                                .url(url)
-                                .addHeader("User-Agent", "93@home-ctrl/1.0")
-                                .build();
-                        OkHttpClient client = new OkHttpClient();
-                        Response response = client.newCall(request).execute();
-                        file.compareHash(response.body().bytes());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                };
-                runnables[i] = lambda;
-            }
-            boolean isValid = Arrays.stream(sharedData.executor.getResult(runnables)).allMatch(result -> (boolean) result);
-            if (isValid){
-                this.onlineClusters.add(cluster);
-            }
-        } catch (Exception e) {
-            return false;
+        if (cluster == null) throw new Exception("cluster not found");
+        Runnable[] runs = new Runnable[8];
+        for (int i = 0; i < 8; i++) {
+            File file = this.files[new Random().nextInt(files.length)];
+            String url = requestDownload(file, cluster);
+            Runnable lambda = () -> {
+                try {
+                    Request request = new Request.Builder()
+                            .url(url)
+                            .addHeader("User-Agent", "93@home-ctrl/1.0")
+                            .build();
+                    OkHttpClient client = new OkHttpClient();
+                    Response response = client.newCall(request).execute();
+                    file.compareHash(response.body().bytes());
+                } catch (Exception ex) {
+                }
+            };
+            runs[i] = lambda;
         }
-        return true;
+        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (boolean) result);
+        if (isValid){
+            this.onlineClusters.add(cluster);
+        }
     }
 }

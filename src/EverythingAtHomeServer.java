@@ -2,6 +2,8 @@ import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import modules.cluster.ClusterJwt;
 
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,9 +55,26 @@ public class EverythingAtHomeServer {
         
         // Event for receiving message from client
         this.ioServer.addEventListener("enable", Object.class, (client, data, ackRequest) -> {
-            boolean enabled = sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+            boolean enabled = false;
+            Exception exception = null;
+            try {
+                sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+                enabled = true;
+            } catch (Exception e) {
+                exception = e;
+            }
             if (ackRequest.isAckRequested()) {
-                ackRequest.sendAckData(enabled?"enabled":"not enabled");
+                if (enabled) {
+                    ackRequest.sendAckData(null, true);
+                }
+                else {
+                    final String message = exception != null ? exception.getMessage() : "Failed to enable";
+                    ackRequest.sendAckData(new HashMap<String, String>(){
+                        {
+                            put("message", "Failed: " + message);
+                        }
+                    });
+                }
             }
         });
         
@@ -73,7 +92,12 @@ public class EverythingAtHomeServer {
         // Event for receiving message from client
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
-                ackRequest.sendAckData("success");
+                if (sharedData.masterControlServer.onlineClusters.contains(sessions.get(client.getSessionId().toString()))) {
+                    ackRequest.sendAckData(null, Utils.getISOTime());
+                }
+                else {
+                    ackRequest.sendAckData(null, false);
+                }
             }
         });
         
