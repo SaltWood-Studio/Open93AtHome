@@ -5,6 +5,7 @@ import modules.cluster.ClusterJwt;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EverythingAtHomeServer {
@@ -55,7 +56,7 @@ public class EverythingAtHomeServer {
         
         // Event for receiving message from client
         this.ioServer.addEventListener("enable", Object.class, (client, data, ackRequest) -> {
-            Dictionary<String, Object> dictionary = (Dictionary<String, Object>) data;
+            Map<String, Object> dictionary = (Map<String, Object>) data;
             String host = (dictionary.get("host") != null) ? dictionary.get("host").toString() : "";
             int port = (dictionary.get("port") != null) ? Integer.parseInt(dictionary.get("port").toString()) : 0;
             Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
@@ -66,13 +67,16 @@ public class EverythingAtHomeServer {
             boolean enabled = false;
             Exception exception = null;
             try {
-                sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+                if (sharedData.masterControlServer.getFiles().size() > 0){
+                    sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+                }
                 enabled = true;
             } catch (Exception e) {
                 exception = e;
             }
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
+                    sharedData.masterControlServer.onlineClusters.add(cluster);
                     ackRequest.sendAckData(null, true);
                 }
                 else {
