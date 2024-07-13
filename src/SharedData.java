@@ -12,7 +12,6 @@ public class SharedData {
     
     public SharedData(MasterControlServer masterControlServer, SimpleHttpServer httpServer, EverythingAtHomeServer everythingAtHomeServer) throws Exception {
         this.masterControlServer = masterControlServer;
-        masterControlServer.update();
         this.httpServer = httpServer;
         this.everythingAtHomeServer = everythingAtHomeServer;
         this.executor = new TaskExecutor();

@@ -14,6 +14,7 @@ public class Main {
         masterServer.sharedData = sharedData;
         httpServer.sharedData = sharedData;
         everythingServer.sharedData = sharedData;
+        masterServer.update();
         httpServer.start(true);
         everythingServer.start();
         
