@@ -1,3 +1,4 @@
+import com.alibaba.fastjson2.JSONObject;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
@@ -8,6 +9,7 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.InetAddress;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -145,6 +147,22 @@ public class Utils {
         result = dictionary.get(key.toString().toUpperCase());
         if (result != null) return result.get(result.size() - 1);
         return null;
+    }
+    
+    public static Map<String, String> parseBodyToDictionary(String string) {
+        if (string.startsWith("{")){
+            return JSONObject.parseObject(string).toJavaObject(Map.class);
+        } else {
+            Map<String, String> dictionary = new HashMap<>();
+            String[] params = string.split("&");
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length == 2) {
+                    dictionary.put(URLDecoder.decode(keyValue[0]), URLDecoder.decode(keyValue[1]));
+                }
+            }
+            return dictionary;
+        }
     }
 }
 

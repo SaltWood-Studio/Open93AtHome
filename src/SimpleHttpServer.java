@@ -19,6 +19,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.Arrays;
+import java.util.Dictionary;
+import java.util.Map;
 
 public class SimpleHttpServer {
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
@@ -159,10 +161,10 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi-agent/token", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
-                JSONObject requestObject = JSON.parseObject(httpExchange.getRequestBody().readAllBytes());
-                String id = requestObject.getString("clusterId");
-                String sign = requestObject.getString("signature");
-                String challenge = requestObject.getString("challenge");
+                Map<String, String> requestObject = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
+                String id = requestObject.get("clusterId");
+                String sign = requestObject.get("signature");
+                String challenge = requestObject.get("challenge");
                 Cluster cluster = sharedData.masterControlServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
