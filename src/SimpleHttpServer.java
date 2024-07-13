@@ -118,7 +118,7 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                if (sharedData.masterControlServer.dictionary.get(httpExchange.getRequestURI().getPath()) == null) {
+                if (sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
@@ -210,7 +210,7 @@ public class SimpleHttpServer {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
                 }
-                FileObject file = sharedData.masterControlServer.dictionary.get(hash);
+                FileObject file = sharedData.masterControlServer.hashToFile.get(hash);
                 if (file == null) {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
@@ -218,9 +218,11 @@ public class SimpleHttpServer {
                 httpExchange.sendResponseHeaders(200, file.size);
                 OutputStream stream = httpExchange.getResponseBody();
                 FileInputStream fis = new FileInputStream(Path.of("./files", file.path).toString());
-                byte[] bytes = new byte[2048];
-                while (fis.read(bytes) > 0){
-                    stream.write(bytes);
+                // 发送文件
+                byte[] buffer = new byte[2048];
+                int len;
+                while ((len = fis.read(buffer)) > 0) {
+                    stream.write(buffer, 0, len);
                 }
                 return null;
             }

@@ -9,7 +9,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MasterControlServer {
-    public final ConcurrentHashMap<String, FileObject> dictionary;
+    public final ConcurrentHashMap<String, FileObject> pathToFile;
+    public final ConcurrentHashMap<String, FileObject> hashToFile;
     public final ConcurrentHashMap<String, Long> clusterTraffics;
     public final ConcurrentHashMap<String, Cluster> clusters;
     public final ArrayList<Cluster> onlineClusters;
@@ -18,7 +19,8 @@ public class MasterControlServer {
     
     public MasterControlServer() {
         this.avroBytes = new byte[1];
-        this.dictionary = new ConcurrentHashMap<>();
+        this.pathToFile = new ConcurrentHashMap<>();
+        this.hashToFile = new ConcurrentHashMap<>();
         this.clusters = new ConcurrentHashMap<>();
         this.clusterTraffics = new ConcurrentHashMap<>();
         this.onlineClusters = new ArrayList<>();
@@ -39,10 +41,11 @@ public class MasterControlServer {
     }
     
     public void updateDictionary() {
-        synchronized (this.dictionary) {
-            this.dictionary.clear();
+        synchronized (this.pathToFile) {
+            this.pathToFile.clear();
             for (FileObject file : this.sharedData.fileStorageHelper.elements) {
-                this.dictionary.put(file.path, file);
+                this.pathToFile.put(file.path, file);
+                this.hashToFile.put(file.hash, file);
             }
         }
     }
@@ -72,8 +75,8 @@ public class MasterControlServer {
     
     public String requestDownload(String path) {
         // 如果 this.files 中有 path 相同的文件
-        if (this.dictionary.containsKey(path)) {
-            FileObject file = this.dictionary.get(path);
+        if (this.pathToFile.containsKey(path)) {
+            FileObject file = this.pathToFile.get(path);
             // 选择一个节点
             Cluster cluster = chooseOneCluster();
             if (cluster == null) return null;

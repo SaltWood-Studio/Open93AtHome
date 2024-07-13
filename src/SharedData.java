@@ -1,5 +1,7 @@
 import modules.TaskExecutor;
 
+import java.io.IOException;
+
 public class SharedData {
     public MasterControlServer masterControlServer;
     public SimpleHttpServer httpServer;
@@ -8,8 +10,9 @@ public class SharedData {
     public StorageHelper<Cluster> clusterStorageHelper;
     public StorageHelper<FileObject> fileStorageHelper;
     
-    public SharedData(MasterControlServer masterControlServer, SimpleHttpServer httpServer, EverythingAtHomeServer everythingAtHomeServer) {
+    public SharedData(MasterControlServer masterControlServer, SimpleHttpServer httpServer, EverythingAtHomeServer everythingAtHomeServer) throws Exception {
         this.masterControlServer = masterControlServer;
+        masterControlServer.update();
         this.httpServer = httpServer;
         this.everythingAtHomeServer = everythingAtHomeServer;
         this.executor = new TaskExecutor();
