@@ -141,7 +141,8 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                String id = httpExchange.getRequestURI().getQuery();
+                Map<String, String> map = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
+                String id = map.get("clusterId");
                 System.out.println(id);
                 Cluster cluster = sharedData.masterControlServer.clusters.get(id);
                 if (cluster == null) {
@@ -171,9 +172,13 @@ public class SimpleHttpServer {
                     return null;
                 }
                 
-                boolean isValid = Utils.verifyJwt(challenge, key);
+                String idInJwt = Utils.decodeJwt(challenge, key, "cluster_id");
+                if (idInJwt == null || !idInJwt.equals(id)) {
+                    httpExchange.sendResponseHeaders(401, 0);
+                    return null;
+                }
                 String realSign = Utils.generateSignature(cluster.secret, challenge);
-                if (realSign != null && (!isValid || !realSign.equals(sign))) {
+                if (realSign != null || !realSign.equals(sign)) {
                     httpExchange.sendResponseHeaders(401, 0);
                     return null;
                 }
