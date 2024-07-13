@@ -138,9 +138,14 @@ public class SimpleHttpServer {
         });
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) {
+            public Response execute(HttpExchange httpExchange) throws Exception {
                 String id = httpExchange.getRequestURI().getQuery();
                 System.out.println(id);
+                Cluster cluster = sharedData.masterControlServer.clusters.get(id);
+                if (cluster == null) {
+                    httpExchange.sendResponseHeaders(404, 0);
+                    return null;
+                }
                 JSONObject object = new JSONObject();
                 object.put("challenge", ClusterJwt.generateJwtToken("challenge",
                         1000 * 60 * 60L, key, ALGORITHM, id).compact());
