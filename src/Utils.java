@@ -10,6 +10,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.InetAddress;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -158,7 +159,7 @@ public class Utils {
             for (String param : params) {
                 String[] keyValue = param.split("=");
                 if (keyValue.length == 2) {
-                    dictionary.put(URLDecoder.decode(keyValue[0]), URLDecoder.decode(keyValue[1]));
+                    dictionary.put(URLDecoder.decode(keyValue[0], Charset.defaultCharset()), URLDecoder.decode(keyValue[1], Charset.defaultCharset()));
                 }
             }
             return dictionary;
