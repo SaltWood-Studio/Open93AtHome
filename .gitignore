@@ -58,3 +58,5 @@ cert*
 cluster.dat
 files.dat
 *.dat
+
+files/

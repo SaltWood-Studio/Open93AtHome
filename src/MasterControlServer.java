@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MasterControlServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
     public final ConcurrentHashMap<String, FileObject> hashToFile;
-    public final ConcurrentHashMap<String, Long> clusterTraffics;
     public final ConcurrentHashMap<String, Cluster> clusters;
     public final ArrayList<Cluster> onlineClusters;
     public SharedData sharedData;
@@ -22,7 +21,6 @@ public class MasterControlServer {
         this.pathToFile = new ConcurrentHashMap<>();
         this.hashToFile = new ConcurrentHashMap<>();
         this.clusters = new ConcurrentHashMap<>();
-        this.clusterTraffics = new ConcurrentHashMap<>();
         this.onlineClusters = new ArrayList<>();
     }
     
@@ -90,9 +88,9 @@ public class MasterControlServer {
         // 为这个请求计算 sign
         String sign = Utils.getSign(file, cluster);
         // 为选择到的节点加上流量
-        this.clusterTraffics.put(cluster.id, this.clusterTraffics.get(cluster) + file.size);
+        cluster.traffic += file.size;
         if (sign == null) return null;
-        return "http://" + cluster.ip + ":" + this.clusters.get(cluster).port + "/download/" + file.hash + sign;
+        return "http://" + cluster.ip + ":" + cluster.port + "/download/" + file.hash + sign;
     }
     
     public Cluster chooseOneCluster() {
@@ -124,9 +122,12 @@ public class MasterControlServer {
             };
             runs[i] = lambda;
         }
-        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (boolean) result);
+        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (result == null || !((boolean)result) ? false : true));
         if (isValid){
             this.onlineClusters.add(cluster);
+        }
+        else {
+            throw new Exception("Unable to download files from the cluster.");
         }
     }
 }
