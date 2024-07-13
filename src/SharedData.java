@@ -21,5 +21,6 @@ public class SharedData {
             this.masterControlServer.clusters.put(cluster.id, cluster);
         }
         this.fileStorageHelper = new StorageHelper<>("files.dat", FileObject.class);
+        fileStorageHelper.load();
     }
 }
