@@ -96,7 +96,8 @@ public class Utils {
         String e = Long.toString(timestamp, 36);
         byte[] signBytes = sha1.digest((cluster.secret + file.hash + e).getBytes());
         String sign = toUrlSafeBase64String(signBytes);
-        return "?s=" + sign + "&e=" + e + "&name=" + file.getName();
+        String filename = file.getName();
+        return "?s=" + sign + "&e=" + e + ((filename == null) ? "" : "&name=" + filename);
     }
     
     public static boolean checkIfInternal(InetAddress address) {
