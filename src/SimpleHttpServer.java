@@ -456,14 +456,14 @@ public class SimpleHttpServer {
                     httpExchange.close();
                 }
                 
-                Runnable runnable = () -> {
+                new Thread(() -> {
                     ProcessBuilder processBuilder = new ProcessBuilder();
                     processBuilder.directory(new File(SharedData.config.config.filePath));
                     processBuilder.command("git", "pull");
                     
                     try {
                         Process process = processBuilder.start();
-                        int exitCode = process.waitFor();
+                        process.waitFor();
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -479,9 +479,8 @@ public class SimpleHttpServer {
                     }
                     sharedData.fileStorageHelper.elements.removeIf(f -> !set.contains(f.path));
                     sharedData.saveAll();
-                };
-                sharedData.executor.executeAsync(runnable);
-                httpExchange.sendResponseHeaders(204, 0);
+                }).start();
+                httpExchange.sendResponseHeaders(204, -1);
                 return null;
             }
         });
