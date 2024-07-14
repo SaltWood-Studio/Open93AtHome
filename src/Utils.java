@@ -81,7 +81,7 @@ public class Utils {
     }
     
     public static String toUrlSafeBase64String(byte[] b) {
-        return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-');
+        return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-').replace("=", "");
     }
     
     public static String getSign(FileObject file, Cluster cluster) {
@@ -92,7 +92,7 @@ public class Utils {
             e1.printStackTrace();
             return null;
         }
-        long timestamp = System.currentTimeMillis() / 10 + 5 * 60 * 100;
+        long timestamp = System.currentTimeMillis() + 5 * 60 * 1000;
         String e = Long.toString(timestamp, 36);
         byte[] signBytes = sha1.digest((cluster.secret + file.hash + e).getBytes());
         String sign = toUrlSafeBase64String(signBytes);
