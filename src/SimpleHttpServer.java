@@ -3,6 +3,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import modules.TaskExecutor;
 import modules.cluster.ClusterJwt;
 import modules.http.HandlerWrapper;
 import modules.http.Response;
@@ -11,10 +12,7 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -458,39 +456,32 @@ public class SimpleHttpServer {
                     httpExchange.close();
                 }
                 
-                ProcessBuilder processBuilder = new ProcessBuilder();
-                processBuilder.directory(new File(SharedData.config.config.filePath));
-                processBuilder.command("git", "pull");
-                
-                String result;
-                boolean isPullSuccess = false;
-                
-                try {
-                    Process process = processBuilder.start();
-                    int exitCode = process.waitFor();
-                    if (exitCode == 0) {
-                        result = "Git pull 拉取仓库成功";
-                        isPullSuccess = true;
-                    } else {
-                        result = "Git pull 拉取仓库失败：" + process.exitValue();
+                Runnable runnable = () -> {
+                    ProcessBuilder processBuilder = new ProcessBuilder();
+                    processBuilder.directory(new File(SharedData.config.config.filePath));
+                    processBuilder.command("git", "pull");
+                    
+                    try {
+                        Process process = processBuilder.start();
+                        int exitCode = process.waitFor();
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                    result = "Git pull 拉取仓库失败：" + e.getMessage();
-                }
-                Set<String> set = Utils.scanFiles(SharedData.config.config.filePath);
-                for (String file : set) {
-                    FileObject f = new FileObject(file);
-                    sharedData.fileStorageHelper.elements.add(f);
-                }
-                sharedData.fileStorageHelper.elements.removeIf(f -> !set.contains(f.path));
-                sharedData.saveAll();
-                if (isPullSuccess) {
-                    httpExchange.sendResponseHeaders(200, result.getBytes().length);
-                } else {
-                    httpExchange.sendResponseHeaders(500, result.getBytes().length);
-                }
-                httpExchange.getResponseBody().write(result.getBytes());
+                    Set<String> set = Utils.scanFiles(SharedData.config.config.filePath);
+                    for (String file : set) {
+                        FileObject f;
+                        try {
+                            f = new FileObject(file);
+                        } catch (FileNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                        sharedData.fileStorageHelper.elements.add(f);
+                    }
+                    sharedData.fileStorageHelper.elements.removeIf(f -> !set.contains(f.path));
+                    sharedData.saveAll();
+                };
+                sharedData.executor.executeAsync(runnable);
+                httpExchange.sendResponseHeaders(204, 0);
                 return null;
             }
         });
