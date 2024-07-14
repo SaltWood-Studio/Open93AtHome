@@ -36,8 +36,9 @@ public class AvroEncoder {
     
     public byte[] writeString(String value) throws IOException {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
-        o.write(writeLong(value.length()));
-        o.write(value.getBytes());
+        byte[] bytes = value.getBytes("UTF-8");
+        o.write(writeLong(bytes.length));
+        o.write(bytes);
         o.close();
         return o.toByteArray();
     }
