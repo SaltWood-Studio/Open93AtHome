@@ -101,7 +101,8 @@ public class EverythingAtHomeServer {
         // Event for receiving message from client
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
-                if (sharedData.masterControlServer.onlineClusters.contains(sessions.get(client.getSessionId().toString()))) {
+                if (sharedData.masterControlServer.onlineClusters
+                        .stream().anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
                     ackRequest.sendAckData((Object) new Object[]{null, Utils.getISOTime()});
                 } else {
                     ackRequest.sendAckData((Object) new Object[]{null, false});
