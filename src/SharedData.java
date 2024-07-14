@@ -1,4 +1,7 @@
 import modules.TaskExecutor;
+import org.w3c.dom.UserDataHandler;
+
+import java.io.IOException;
 
 
 public class SharedData {
@@ -34,5 +37,8 @@ public class SharedData {
         fileStorageHelper.save();
         tokenStorageHelper.save();
         config.save();
+        try {
+            masterControlServer.update();
+        } catch (IOException e) { }
     }
 }
