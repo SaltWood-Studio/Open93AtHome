@@ -197,6 +197,9 @@ public class Utils {
                 if (file.isFile()) {
                     // 计算相对于根目录的路径
                     String relativePath = file.getAbsolutePath().substring(rootPath.length()).replace(File.separator, "/");
+                    if (!relativePath.startsWith("/")) {
+                        relativePath = "/" + relativePath;
+                    }
                     filePaths.add(relativePath);
                 } else if (file.isDirectory()) {
                     // 递归扫描子目录

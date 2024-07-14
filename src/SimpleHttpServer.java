@@ -467,7 +467,7 @@ public class SimpleHttpServer {
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Set<String> set = Utils.scanFiles(SharedData.config.config.filePath);
+                    Set<String> set = Utils.scanFiles(Path.of(SharedData.config.config.filePath).toFile().getAbsolutePath());
                     for (String file : set) {
                         FileObject f;
                         try {
