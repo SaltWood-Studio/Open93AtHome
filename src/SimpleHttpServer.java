@@ -274,6 +274,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestNewCluster"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
@@ -306,6 +307,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddCluster"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
@@ -338,6 +340,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String response = JSONObject.toJSONString(sharedData.clusterStorageHelper.elements);
                 byte[] message = response.getBytes();
@@ -356,6 +359,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String response = JSONObject.toJSONString(sharedData.masterControlServer.onlineClusters);
                 byte[] message = response.getBytes();
@@ -400,6 +404,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveCluster"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
@@ -435,6 +440,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddFile"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
@@ -472,6 +478,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveFile"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
@@ -498,6 +505,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListFile"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 String response = JSON.toJSONString(sharedData.fileStorageHelper.elements);
                 byte[] message = response.getBytes();
@@ -516,8 +524,8 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestUpdateFiles"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
-                
                 new Thread(() -> {
                     ProcessBuilder processBuilder = new ProcessBuilder();
                     processBuilder.directory(new File(SharedData.config.config.filePath));
@@ -553,6 +561,7 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestSaveAll"));
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
                 sharedData.saveAll();
                 byte[] result = "Saved.".getBytes();
@@ -569,8 +578,8 @@ public class SimpleHttpServer {
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.permissionAll);
                 if (!isAuthorized) {
                     httpExchange.close();
+                    return null;
                 }
-                
                 Token token = new Token();
                 Map<String, Boolean> body = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
                 for (Map.Entry<String, Boolean> entry : body.entrySet()) {
