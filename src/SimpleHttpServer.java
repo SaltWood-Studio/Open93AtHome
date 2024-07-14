@@ -129,9 +129,11 @@ public class SimpleHttpServer {
                 String url = sharedData.masterControlServer.requestDownload(httpExchange.getRequestURI().getPath());
                 if (url == null) {
                     try {
+                        FileObject file = sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        FileInputStream fis = new FileInputStream("./files" + sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath()).path);
+                        FileInputStream fis = new FileInputStream("./files" + file.path);
                         OutputStream stream = httpExchange.getResponseBody();
+                        httpExchange.sendResponseHeaders(200, file.size);
                         // 发送文件
                         byte[] buffer = new byte[2048];
                         int len;
