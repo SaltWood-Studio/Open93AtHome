@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RunnableFuture;
 
 public class MasterControlServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
@@ -107,29 +108,32 @@ public class MasterControlServer {
     public void tryEnable(String id) throws Exception {
         Cluster cluster = this.clusters.get(id);
         if (cluster == null) throw new Exception("cluster not found");
-        Runnable[] runs = new Runnable[8];
+        boolean isValid = true;
+        Exception exception = null;
         for (int i = 0; i < 8; i++) {
             FileObject file = getFiles().get(new Random().nextInt(getFiles().size()));
             String url = requestDownload(file, cluster);
-            Runnable lambda = () -> {
-                try {
-                    Request request = new Request.Builder()
-                            .url(url)
-                            .addHeader("User-Agent", "93@home-ctrl/1.0")
-                            .build();
-                    OkHttpClient client = new OkHttpClient();
-                    Response response = client.newCall(request).execute();
-                    file.compareHash(response.body().bytes());
-                } catch (Exception ex) {
+            try {
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("User-Agent", SharedData.config.config.userAgent)
+                        .build();
+                OkHttpClient client = new OkHttpClient();
+                Response response = client.newCall(request).execute();
+                if (!file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
+                    isValid = false;
+                    break;
                 }
-            };
-            runs[i] = lambda;
+            } catch (Exception ex) {
+                exception = ex;
+                isValid = false;
+                break;
+            }
         }
-        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (result == null || !((boolean) result) ? false : true));
         if (isValid) {
             this.onlineClusters.add(cluster);
         } else {
-            throw new Exception("Unable to download files from the cluster.");
+            throw new Exception("Unable to download files from the cluster: " + exception.getMessage());
         }
     }
 }
