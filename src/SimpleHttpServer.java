@@ -468,6 +468,7 @@ public class SimpleHttpServer {
                         e.printStackTrace();
                     }
                     Set<String> set = Utils.scanFiles(Path.of(SharedData.config.config.filePath).toFile().getAbsolutePath());
+                    sharedData.fileStorageHelper.elements.clear();
                     for (String file : set) {
                         FileObject f;
                         try {
@@ -477,7 +478,6 @@ public class SimpleHttpServer {
                         }
                         sharedData.fileStorageHelper.elements.add(f);
                     }
-                    sharedData.fileStorageHelper.elements.removeIf(f -> !set.contains(f.path));
                     sharedData.saveAll();
                 }).start();
                 httpExchange.sendResponseHeaders(204, -1);
