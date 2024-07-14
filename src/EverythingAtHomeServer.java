@@ -77,15 +77,15 @@ public class EverythingAtHomeServer {
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
                     sharedData.masterControlServer.onlineClusters.add(cluster);
-                    ackRequest.sendAckData(null, true);
+                    ackRequest.sendAckData((Object) new Object[] {null, true});
                 }
                 else {
                     final String message = exception != null ? exception.getMessage() : "Failed to enable";
-                    ackRequest.sendAckData(new HashMap<String, String>(){
+                    ackRequest.sendAckData((Object) new Object[] {new HashMap<String, String>(){
                         {
                             put("message", "Failed: " + message);
                         }
-                    });
+                    }});
                 }
             }
         });
@@ -105,10 +105,10 @@ public class EverythingAtHomeServer {
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
                 if (sharedData.masterControlServer.onlineClusters.contains(sessions.get(client.getSessionId().toString()))) {
-                    ackRequest.sendAckData(null, Utils.getISOTime());
+                    ackRequest.sendAckData((Object) new Object[] {null, Utils.getISOTime()});
                 }
                 else {
-                    ackRequest.sendAckData(null, false);
+                    ackRequest.sendAckData((Object) new Object[] {null, false});
                 }
             }
         });

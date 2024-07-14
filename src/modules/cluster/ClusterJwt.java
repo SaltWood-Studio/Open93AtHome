@@ -43,12 +43,11 @@ public class ClusterJwt {
      * @return 返回生成的jwt token
      */
     public String generateJwtToken() {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("cluster_id", this.clusterId);
-        claims.put("cluster_secret", this.clusterSecret);
         
         return generateJwtToken(issuer, this.expiration, key, ALGORITHM, this.clusterId)
-                .claims(claims)
+                .claims()
+                .add("cluster_secret", this.clusterSecret)
+                .and()
                 .compact();
     }
 }
