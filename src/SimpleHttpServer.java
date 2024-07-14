@@ -268,6 +268,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/new_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestNewCluster"));
                 if (!isAuthorized) {
@@ -299,6 +300,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/add_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddCluster"));
                 if (!isAuthorized) {
@@ -330,6 +332,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/list_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
                 if (!isAuthorized) {
@@ -347,6 +350,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/list_online_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
                 if (!isAuthorized) {
@@ -364,6 +368,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/rank", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 JSONArray array = new JSONArray();
                 List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).collect(Collectors.toList());
                 for (Cluster cluster : clusters) {
@@ -389,6 +394,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/remove_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveCluster"));
                 if (!isAuthorized) {
@@ -421,6 +427,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/add_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddFile"));
                 if (!isAuthorized) {
@@ -457,6 +464,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/remove_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveFile"));
                 if (!isAuthorized) {
@@ -482,6 +490,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/list_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListFile"));
                 if (!isAuthorized) {
@@ -552,6 +561,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/new_token", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
                         sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.permissionAll);
                 if (!isAuthorized) {
