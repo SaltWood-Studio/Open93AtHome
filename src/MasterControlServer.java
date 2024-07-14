@@ -92,7 +92,8 @@ public class MasterControlServer {
         // 为这个请求计算 sign
         String sign = Utils.getSign(file, cluster);
         // 为选择到的节点加上流量
-        cluster.traffic += file.size;
+        cluster.pendingHits += 1;
+        cluster.pendingTraffics += file.size;
         if (sign == null) return null;
         return "http://" + cluster.ip + ":" + cluster.port + "/download/" + file.hash + sign;
     }

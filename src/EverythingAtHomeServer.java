@@ -2,6 +2,7 @@ import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import modules.cluster.ClusterJwt;
 
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -103,6 +104,14 @@ public class EverythingAtHomeServer {
             if (ackRequest.isAckRequested()) {
                 if (sharedData.masterControlServer.onlineClusters
                         .stream().anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
+                    Map<String, Object> request = (Map<String, Object>) data;
+                    Long hits = (Long) request.get("hits");
+                    Long bytes = (Long) request.get("bytes");
+                    Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
+                    cluster.hits += Math.min(cluster.pendingHits, hits);
+                    cluster.traffics += Math.min(cluster.pendingTraffics, bytes);
+                    cluster.pendingHits = 0L;
+                    cluster.pendingTraffics = 0L;
                     ackRequest.sendAckData((Object) new Object[]{null, Utils.getISOTime()});
                 } else {
                     ackRequest.sendAckData((Object) new Object[]{null, false});

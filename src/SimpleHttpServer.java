@@ -1,4 +1,5 @@
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
@@ -16,9 +17,8 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.security.KeyStore;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SimpleHttpServer {
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
@@ -335,9 +335,50 @@ public class SimpleHttpServer {
                 if (!isAuthorized) {
                     httpExchange.close();
                 }
-                String request = new String(httpExchange.getRequestBody().readAllBytes());
                 String response = JSONObject.toJSONString(sharedData.clusterStorageHelper.elements);
                 byte[] message = response.getBytes();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/list_online_cluster", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                String response = JSONObject.toJSONString(sharedData.masterControlServer.onlineClusters);
+                byte[] message = response.getBytes();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/rank", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                JSONArray array = new JSONArray();
+                List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).collect(Collectors.toList());
+                for (Cluster cluster : clusters) {
+                    JSONObject object = new JSONObject();
+                    object.put("id", cluster.id);
+                    object.put("name", cluster.name);
+                    object.put("bandwidth", cluster.bandwidth);
+                    object.put("bytes", cluster.traffics);
+                    object.put("pendingBytes", cluster.pendingTraffics);
+                    object.put("hits", cluster.hits);
+                    object.put("pendingHits", cluster.pendingHits);
+                    array.add(object);
+                }
+                String response = array.toJSONString();
+                byte[] message = response.getBytes("utf-8");
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -365,6 +406,15 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/random_file", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                FileObject file = sharedData.fileStorageHelper.elements.get(new Random().nextInt(sharedData.fileStorageHelper.elements.size()));
+                httpExchange.getResponseHeaders().set("Location", file.path);
+                httpExchange.sendResponseHeaders(302, 0);
                 return null;
             }
         });
