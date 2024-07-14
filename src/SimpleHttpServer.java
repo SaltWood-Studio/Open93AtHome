@@ -15,6 +15,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.*;
@@ -418,9 +419,11 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/random_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 FileObject file = sharedData.fileStorageHelper.elements.get(new Random().nextInt(sharedData.fileStorageHelper.elements.size()));
-                httpExchange.getResponseHeaders().set("Location", file.path);
-                httpExchange.sendResponseHeaders(302, 0);
+                byte[] bytes = JSON.toJSONBytes(file);
+                httpExchange.sendResponseHeaders(200, bytes.length);
+                httpExchange.getResponseBody().write(bytes);
                 return null;
             }
         });
