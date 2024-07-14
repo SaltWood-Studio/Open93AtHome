@@ -81,7 +81,7 @@ public class Utils {
     }
     
     public static String toUrlSafeBase64String(byte[] b) {
-        return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-').replace("=", "");
+        return Base64.getEncoder().encodeToString(b).replace('/', '_').replace('+', '-');
     }
     
     public static String getSign(FileObject file, Cluster cluster) {
