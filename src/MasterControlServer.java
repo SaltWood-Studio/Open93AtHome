@@ -5,7 +5,10 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MasterControlServer {
@@ -122,11 +125,10 @@ public class MasterControlServer {
             };
             runs[i] = lambda;
         }
-        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (result == null || !((boolean)result) ? false : true));
-        if (isValid){
+        boolean isValid = Arrays.stream(sharedData.executor.getResult(runs)).allMatch(result -> (result == null || !((boolean) result) ? false : true));
+        if (isValid) {
             this.onlineClusters.add(cluster);
-        }
-        else {
+        } else {
             throw new Exception("Unable to download files from the cluster.");
         }
     }

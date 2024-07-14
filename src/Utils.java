@@ -1,13 +1,13 @@
 import com.alibaba.fastjson2.JSONObject;
+import com.sun.net.httpserver.Headers;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
 
-import com.sun.net.httpserver.Headers;
-
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -74,7 +74,7 @@ public class Utils {
                     .verifyWith(key)
                     .build()
                     .parse(jwt);
-            return ((DefaultClaims)j.getPayload()).get(header).toString();
+            return ((DefaultClaims) j.getPayload()).get(header).toString();
         } catch (Exception e) {
             return null;
         }
@@ -124,34 +124,32 @@ public class Utils {
                     return true;
                 }
             case SECTION_5:
-                switch (b1) {
-                    case SECTION_6:
-                        return true;
+                if (b1 == SECTION_6) {
+                    return true;
                 }
             default:
                 return false;
         }
     }
     
-    public static String getISOTime(){
+    public static String getISOTime() {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String timestamp = df.format(new Date());
-        return timestamp;
+        return df.format(new Date());
     }
     
     public static String tryGetInDictionary(Headers dictionary, String key) {
         List<String> result = dictionary.get(key);
         if (result != null) return result.get(result.size() - 1);
-        result = dictionary.get(key.toString().toLowerCase());
+        result = dictionary.get(key.toLowerCase());
         if (result != null) return result.get(result.size() - 1);
-        result = dictionary.get(key.toString().toUpperCase());
+        result = dictionary.get(key.toUpperCase());
         if (result != null) return result.get(result.size() - 1);
         return null;
     }
     
-    public static Map<String, String> parseBodyToDictionary(String string) {
-        if (string.startsWith("{")){
+    public static Map parseBodyToDictionary(String string) {
+        if (string.startsWith("{")) {
             return JSONObject.parseObject(string).toJavaObject(Map.class);
         } else {
             Map<String, String> dictionary = new HashMap<>();
@@ -163,6 +161,48 @@ public class Utils {
                 }
             }
             return dictionary;
+        }
+    }
+    
+    /**
+     * 扫描指定目录，返回该目录下所有文件的路径集合
+     *
+     * @param directoryPath 要扫描的目录路径
+     * @return 包含所有文件相对路径的 Set 集合
+     */
+    public static Set<String> scanFiles(String directoryPath) {
+        Set<String> filePaths = new HashSet<>();
+        File directory = new File(directoryPath);
+        if (directory.exists() && directory.isDirectory()) {
+            scanDirectory(directory, filePaths, directoryPath);
+        }
+        return filePaths;
+    }
+    
+    /**
+     * 递归扫描目录及其子目录，收集所有文件的相对路径
+     *
+     * @param directory 当前扫描的目录
+     * @param filePaths 存储文件路径的 Set 集合
+     * @param rootPath  根目录路径，用于计算相对路径
+     */
+    private static void scanDirectory(File directory, Set<String> filePaths, String rootPath) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // 忽略以点开头的文件或目录
+                if (file.getName().startsWith(".")) {
+                    continue;
+                }
+                if (file.isFile()) {
+                    // 计算相对于根目录的路径
+                    String relativePath = file.getAbsolutePath().substring(rootPath.length()).replace(File.separator, "/");
+                    filePaths.add(relativePath);
+                } else if (file.isDirectory()) {
+                    // 递归扫描子目录
+                    scanDirectory(file, filePaths, rootPath);
+                }
+            }
         }
     }
 }

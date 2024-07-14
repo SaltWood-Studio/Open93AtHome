@@ -6,8 +6,6 @@ import io.jsonwebtoken.security.SecureDigestAlgorithm;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class ClusterJwt {

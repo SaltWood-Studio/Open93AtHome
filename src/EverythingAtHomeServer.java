@@ -2,16 +2,15 @@ import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import modules.cluster.ClusterJwt;
 
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EverythingAtHomeServer {
+    private final ConcurrentHashMap<String, String> sessions;
     public SharedData sharedData;
     protected SocketIOServer ioServer;
-    private final ConcurrentHashMap<String, String> sessions;
     
     public EverythingAtHomeServer() {
         this(9300);
@@ -37,7 +36,7 @@ public class EverythingAtHomeServer {
     private void addListeners() {
         // Event for client connection
         this.ioServer.addConnectListener(client -> {
-            String token = ((LinkedHashMap<String, String>)client.getHandshakeData().getAuthToken()).get("token");
+            String token = ((LinkedHashMap<String, String>) client.getHandshakeData().getAuthToken()).get("token");
             if (client.getHandshakeData().getAuthToken() == null || token == null || token.isEmpty()) {
                 client.disconnect();
                 return;
@@ -46,8 +45,7 @@ public class EverythingAtHomeServer {
                 if (id == null || this.sharedData.masterControlServer.clusters.get(id) == null) {
                     client.disconnect();
                     return;
-                }
-                else {
+                } else {
                     this.sessions.put(client.getSessionId().toString(), id);
                 }
             }
@@ -67,7 +65,7 @@ public class EverythingAtHomeServer {
             boolean enabled = false;
             Exception exception = null;
             try {
-                if (sharedData.masterControlServer.getFiles().size() > 0){
+                if (sharedData.masterControlServer.getFiles().size() > 0) {
                     sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
                 }
                 enabled = true;
@@ -77,11 +75,10 @@ public class EverythingAtHomeServer {
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
                     sharedData.masterControlServer.onlineClusters.add(cluster);
-                    ackRequest.sendAckData((Object) new Object[] {null, true});
-                }
-                else {
+                    ackRequest.sendAckData((Object) new Object[]{null, true});
+                } else {
                     final String message = exception != null ? exception.getMessage() : "Failed to enable";
-                    ackRequest.sendAckData((Object) new Object[] {new HashMap<String, String>(){
+                    ackRequest.sendAckData((Object) new Object[]{new HashMap<String, String>() {
                         {
                             put("message", "Failed: " + message);
                         }
@@ -94,7 +91,7 @@ public class EverythingAtHomeServer {
         this.ioServer.addEventListener("disable", Object.class, (client, data, ackRequest) -> {
             this.sharedData.masterControlServer.onlineClusters.remove(
                     this.sharedData.masterControlServer.clusters.get(
-                        this.sessions.get(client.getSessionId().toString())));
+                            this.sessions.get(client.getSessionId().toString())));
             this.sessions.remove(client.getSessionId().toString());
             if (ackRequest.isAckRequested()) {
                 ackRequest.sendAckData("disabled");
@@ -105,10 +102,9 @@ public class EverythingAtHomeServer {
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
                 if (sharedData.masterControlServer.onlineClusters.contains(sessions.get(client.getSessionId().toString()))) {
-                    ackRequest.sendAckData((Object) new Object[] {null, Utils.getISOTime()});
-                }
-                else {
-                    ackRequest.sendAckData((Object) new Object[] {null, false});
+                    ackRequest.sendAckData((Object) new Object[]{null, Utils.getISOTime()});
+                } else {
+                    ackRequest.sendAckData((Object) new Object[]{null, false});
                 }
             }
         });

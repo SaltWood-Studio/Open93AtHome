@@ -19,8 +19,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.Arrays;
-import java.util.Dictionary;
 import java.util.Map;
+import java.util.Set;
 
 public class SimpleHttpServer {
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
@@ -131,7 +131,7 @@ public class SimpleHttpServer {
                     try {
                         FileObject file = sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        FileInputStream fis = new FileInputStream("./files" + file.path);
+                        FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString());
                         OutputStream stream = httpExchange.getResponseBody();
                         httpExchange.sendResponseHeaders(200, file.size);
                         // 发送文件
@@ -245,7 +245,7 @@ public class SimpleHttpServer {
                 }
                 httpExchange.sendResponseHeaders(200, file.size);
                 OutputStream stream = httpExchange.getResponseBody();
-                FileInputStream fis = new FileInputStream(Path.of("./files", file.path).toString());
+                FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString());
                 // 发送文件
                 byte[] buffer = new byte[2048];
                 int len;
@@ -270,8 +270,9 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/new_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
-                if (!isInternalRequest) {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestNewCluster"));
+                if (!isAuthorized) {
                     httpExchange.close();
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -283,13 +284,13 @@ public class SimpleHttpServer {
                 Cluster cluster = new Cluster(id, secret, name, bandwidth);
                 sharedData.masterControlServer.clusters.put(id, cluster);
                 sharedData.clusterStorageHelper.elements.add(cluster);
+                sharedData.saveAll();
                 JSONObject response = new JSONObject();
                 response.put("id", id);
                 response.put("secret", secret);
                 response.put("name", name);
                 response.put("bandwidth", bandwidth);
                 byte[] message = response.toJSONString().getBytes();
-                saveAll();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -300,8 +301,9 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/add_cluster", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
-                if (!isInternalRequest) {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddCluster"));
+                if (!isAuthorized) {
                     httpExchange.close();
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -319,7 +321,48 @@ public class SimpleHttpServer {
                 response.put("name", name);
                 response.put("bandwidth", bandwidth);
                 byte[] message = response.toJSONString().getBytes();
-                saveAll();
+                sharedData.saveAll();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/list_cluster", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListCluster"));
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                String response = JSONObject.toJSONString(sharedData.clusterStorageHelper.elements);
+                byte[] message = response.getBytes();
+                httpExchange.sendResponseHeaders(200, message.length);
+                OutputStream os = httpExchange.getResponseBody();
+                os.write(message);
+                os.close();
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/remove_cluster", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveCluster"));
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                String request = new String(httpExchange.getRequestBody().readAllBytes());
+                JSONObject object = JSONObject.parseObject(request);
+                String id = (object.get("id") == null) ? null : (String) object.get("id");
+                JSONObject response = new JSONObject();
+                response.put("id", id);
+                response.put("isRemoved", sharedData.clusterStorageHelper.elements.removeIf(c -> c.id.equals(id)));
+                sharedData.saveAll();
+                byte[] message = response.toJSONString().getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -330,32 +373,32 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/add_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
-                if (!isInternalRequest) {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestAddFile"));
+                if (!isAuthorized) {
                     httpExchange.close();
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
-                String hash = null;
-                String filePath = Path.of("./files", path).toString();
-                try (FileInputStream fis = new FileInputStream(filePath)){
+                String hash;
+                Path filePath = Path.of(SharedData.config.config.filePath, path);
+                try (FileInputStream fis = new FileInputStream(filePath.toString())) {
                     hash = FileObject.computeHash(fis);
                 } catch (Exception e) {
                     throw e;
                 }
-                Long size = new File(filePath).length();
-                Long lastModified = 0L;
+                long size = filePath.toFile().length();
+                long lastModified = filePath.toFile().lastModified();
                 sharedData.fileStorageHelper.elements.add(new FileObject(path, hash, size, lastModified));
                 sharedData.masterControlServer.update();
-                saveAll();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
                 response.put("hash", hash);
                 response.put("size", size);
                 response.put("lastModified", lastModified);
                 byte[] message = response.toJSONString().getBytes();
-                saveAll();
+                sharedData.saveAll();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -366,8 +409,9 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/remove_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
-                if (!isInternalRequest) {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestRemoveFile"));
+                if (!isAuthorized) {
                     httpExchange.close();
                 }
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -375,12 +419,11 @@ public class SimpleHttpServer {
                 String path = (String) object.get("path");
                 boolean removed = sharedData.fileStorageHelper.elements.removeIf(fileObject -> fileObject.path.equals(path));
                 sharedData.masterControlServer.update();
-                saveAll();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
                 response.put("isRemoved", removed);
                 byte[] message = response.toJSONString().getBytes();
-                saveAll();
+                sharedData.saveAll();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -391,13 +434,14 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/list_file", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                boolean isInternalRequest = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress());
-                if (!isInternalRequest) {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestListFile"));
+                if (!isAuthorized) {
                     httpExchange.close();
                 }
                 String response = JSON.toJSONString(sharedData.fileStorageHelper.elements);
                 byte[] message = response.getBytes();
-                saveAll();
+                sharedData.saveAll();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
@@ -405,10 +449,90 @@ public class SimpleHttpServer {
                 return null;
             }
         });
-    }
-    
-    public void saveAll(){
-        sharedData.clusterStorageHelper.save();
-        sharedData.fileStorageHelper.save();
+        this.server.createContext("/93AtHome/update_files", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestUpdateFiles"));
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                
+                ProcessBuilder processBuilder = new ProcessBuilder();
+                processBuilder.directory(new File(SharedData.config.config.filePath));
+                processBuilder.command("git", "pull");
+                
+                String result;
+                boolean isPullSuccess = false;
+                
+                try {
+                    Process process = processBuilder.start();
+                    int exitCode = process.waitFor();
+                    if (exitCode == 0) {
+                        result = "Git pull 拉取仓库成功";
+                        isPullSuccess = true;
+                    } else {
+                        result = "Git pull 拉取仓库失败：" + process.exitValue();
+                    }
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                    result = "Git pull 拉取仓库失败：" + e.getMessage();
+                }
+                Set<String> set = Utils.scanFiles(SharedData.config.config.filePath);
+                for (String file : set) {
+                    FileObject f = new FileObject(file);
+                    sharedData.fileStorageHelper.elements.add(f);
+                }
+                sharedData.fileStorageHelper.elements.removeIf(f -> !set.contains(f.path));
+                sharedData.saveAll();
+                if (isPullSuccess) {
+                    httpExchange.sendResponseHeaders(200, result.getBytes().length);
+                } else {
+                    httpExchange.sendResponseHeaders(500, result.getBytes().length);
+                }
+                httpExchange.getResponseBody().write(result.getBytes());
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/save_all", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.verifyPermission(httpExchange, "permissionRequestSaveAll"));
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                sharedData.saveAll();
+                byte[] result = "Saved.".getBytes();
+                httpExchange.sendResponseHeaders(200, result.length);
+                httpExchange.getResponseBody().write(result);
+                return null;
+            }
+        });
+        this.server.createContext("/93AtHome/new_token", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                boolean isAuthorized = Utils.checkIfInternal(httpExchange.getRemoteAddress().getAddress()) ||
+                        sharedData.tokenStorageHelper.elements.stream().anyMatch(t -> t.permissionAll);
+                if (!isAuthorized) {
+                    httpExchange.close();
+                }
+                
+                Token token = new Token();
+                Map<String, Boolean> body = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
+                for (Map.Entry<String, Boolean> entry : body.entrySet()) {
+                    token.setPermission(entry.getKey(), entry.getValue());
+                }
+                sharedData.tokenStorageHelper.elements.add(token);
+                sharedData.saveAll();
+                JSONObject object = new JSONObject();
+                object.put("token", token);
+                object.put("permissions", body);
+                byte[] bytes = object.toString().getBytes();
+                httpExchange.sendResponseHeaders(200, bytes.length);
+                httpExchange.getResponseBody().write(bytes);
+                return null;
+            }
+        });
     }
 }
