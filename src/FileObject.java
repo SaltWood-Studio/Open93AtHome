@@ -62,11 +62,6 @@ public class FileObject {
         }
     }
     
-    public String getName() {
-        String[] paths = this.path.split("/");
-        return paths[paths.length - 1];
-    }
-    
     public String computeHash() {
         try {
             FileInputStream fis = new FileInputStream(path);
