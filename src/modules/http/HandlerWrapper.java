@@ -14,6 +14,8 @@ public class HandlerWrapper implements HttpHandler {
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.bytes);
             }
+            System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + exchange.getProtocol() + " - "
+                    + exchange.getResponseCode() + " [" + exchange.getRemoteAddress().toString() + "]");
             exchange.getResponseBody().close();
             exchange.close();
         } catch (Exception e) {
