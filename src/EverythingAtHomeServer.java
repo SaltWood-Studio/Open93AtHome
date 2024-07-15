@@ -74,7 +74,9 @@ public class EverythingAtHomeServer {
             }
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
-                    sharedData.masterControlServer.onlineClusters.add(cluster);
+                    if (sharedData.masterControlServer.onlineClusters.stream().noneMatch(c -> c.id.equals(cluster.id))) {
+                        sharedData.masterControlServer.onlineClusters.add(cluster);
+                    }
                     ackRequest.sendAckData((Object) new Object[]{null, true});
                 } else {
                     final String message = exception != null ? exception.getMessage() : "Failed to enable";
