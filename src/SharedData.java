@@ -36,6 +36,7 @@ public class SharedData {
         config.save();
         try {
             masterControlServer.update();
-        } catch (IOException e) { }
+        } catch (IOException e) {
+        }
     }
 }

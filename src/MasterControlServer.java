@@ -1,16 +1,11 @@
 import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RunnableFuture;
 
 public class MasterControlServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
