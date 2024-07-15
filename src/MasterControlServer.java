@@ -12,7 +12,6 @@ public class MasterControlServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
     public final ConcurrentHashMap<String, FileObject> hashToFile;
     public final ConcurrentHashMap<String, Cluster> clusters;
-    private final ArrayList<Cluster> onlineClusters;
     public SharedData sharedData;
     private byte[] avroBytes;
     
@@ -21,7 +20,6 @@ public class MasterControlServer {
         this.pathToFile = new ConcurrentHashMap<>();
         this.hashToFile = new ConcurrentHashMap<>();
         this.clusters = new ConcurrentHashMap<>();
-        this.onlineClusters = new ArrayList<>();
     }
     
     public List<FileObject> getFiles() {
