@@ -154,6 +154,7 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Map<String, String> map = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 String id = map.get("clusterId");
                 System.out.println(id);
@@ -175,6 +176,7 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi-agent/token", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws IOException {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Map<String, String> requestObject = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
                 String id = requestObject.get("clusterId");
                 String sign = requestObject.get("signature");
@@ -211,6 +213,7 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi/configuration", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 verifyClusterRequest(httpExchange);
                 JSONObject sync = new JSONObject();
                 sync.put("source", "center");
