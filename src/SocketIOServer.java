@@ -1,5 +1,4 @@
 import com.corundumstudio.socketio.Configuration;
-import com.corundumstudio.socketio.SocketIOServer;
 import modules.cluster.ClusterJwt;
 
 import java.util.HashMap;
@@ -7,27 +6,27 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EverythingAtHomeServer {
+public class SocketIOServer {
     private final ConcurrentHashMap<String, String> sessions;
     public SharedData sharedData;
-    protected SocketIOServer ioServer;
+    protected com.corundumstudio.socketio.SocketIOServer ioServer;
     
-    public EverythingAtHomeServer() {
+    public SocketIOServer() {
         this(9300);
     }
     
-    public EverythingAtHomeServer(int socketioPort) {
+    public SocketIOServer(int socketioPort) {
         this("", socketioPort);
     }
     
-    public EverythingAtHomeServer(String host, int socketioPort) {
+    public SocketIOServer(String host, int socketioPort) {
         // Configuration for the server
         Configuration config = new Configuration();
         config.setHostname(host);
         config.setPort(socketioPort);
         
         // Create a new SocketIOServer instance
-        this.ioServer = new SocketIOServer(config);
+        this.ioServer = new com.corundumstudio.socketio.SocketIOServer(config);
         this.sessions = new ConcurrentHashMap<>();
         
         this.addListeners();
@@ -42,7 +41,7 @@ public class EverythingAtHomeServer {
                 return;
             } else {
                 String id = Utils.decodeJwt(token, ClusterJwt.key, "cluster_id");
-                if (id == null || this.sharedData.masterControlServer.clusters.get(id) == null) {
+                if (id == null || this.sharedData.centerServer.clusters.get(id) == null) {
                     client.disconnect();
                     return;
                 } else {
@@ -57,16 +56,16 @@ public class EverythingAtHomeServer {
             Map<String, Object> dictionary = (Map<String, Object>) data;
             String host = (dictionary.get("host") != null) ? dictionary.get("host").toString() : "";
             int port = (dictionary.get("port") != null) ? Integer.parseInt(dictionary.get("port").toString()) : 0;
-            Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
+            Cluster cluster = sharedData.centerServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
             cluster.ip = host;
             cluster.port = port;
-            sharedData.masterControlServer.clusters.put(cluster.id, cluster);
+            sharedData.centerServer.clusters.put(cluster.id, cluster);
             sharedData.clusterStorageHelper.save();
             boolean enabled = false;
             Exception exception = null;
             try {
-                if (sharedData.masterControlServer.getFiles().size() > 0) {
-                    sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+                if (sharedData.centerServer.getFiles().size() > 0) {
+                    sharedData.centerServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
                     cluster.startWarden(sharedData.fileStorageHelper.elements);
                 }
                 enabled = true;
@@ -75,8 +74,8 @@ public class EverythingAtHomeServer {
             }
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
-                    if (sharedData.masterControlServer.getOnlineClusters().noneMatch(c -> c.id.equals(cluster.id))) {
-                        sharedData.masterControlServer.clusters.get(cluster.id).isOnline = true;
+                    if (sharedData.centerServer.getOnlineClusters().noneMatch(c -> c.id.equals(cluster.id))) {
+                        sharedData.centerServer.clusters.get(cluster.id).isOnline = true;
                     }
                     ackRequest.sendAckData((Object) new Object[]{null, true});
                 } else {
@@ -93,7 +92,7 @@ public class EverythingAtHomeServer {
         // Event for receiving message from client
         this.ioServer.addEventListener("disable", Object.class, (client, data, ackRequest) -> {
             String id = sessions.get(client.getSessionId().toString());
-            this.sharedData.masterControlServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
+            this.sharedData.centerServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
                     .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
             if (ackRequest.isAckRequested()) {
@@ -104,12 +103,12 @@ public class EverythingAtHomeServer {
         // Event for receiving message from client
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
-                if (sharedData.masterControlServer.getOnlineClusters()
+                if (sharedData.centerServer.getOnlineClusters()
                         .anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
                     Map<String, Object> request = (Map<String, Object>) data;
                     Integer hits = (Integer) request.get("hits");
                     Integer bytes = (Integer) request.get("bytes");
-                    Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
+                    Cluster cluster = sharedData.centerServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
                     cluster.hits += Math.min(cluster.pendingHits, hits);
                     cluster.traffics += Math.min(cluster.pendingTraffics, bytes);
                     cluster.pendingHits = 0L;
@@ -124,7 +123,7 @@ public class EverythingAtHomeServer {
         // Event for client disconnect
         this.ioServer.addDisconnectListener(client -> {
             String id = sessions.get(client.getSessionId().toString());
-            this.sharedData.masterControlServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
+            this.sharedData.centerServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
                     .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
             System.out.println("Client disconnected: " + client.getSessionId());

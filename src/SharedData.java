@@ -3,23 +3,23 @@ import java.io.IOException;
 
 public class SharedData {
     public static ConfigHelper config;
-    public MasterControlServer masterControlServer;
+    public CenterServer centerServer;
     public SimpleHttpServer httpServer;
-    public EverythingAtHomeServer everythingAtHomeServer;
+    public SocketIOServer socketIOServer;
     // public TaskExecutor executor;
     public StorageHelper<Cluster> clusterStorageHelper;
     public StorageHelper<FileObject> fileStorageHelper;
     public StorageHelper<Token> tokenStorageHelper;
     
-    public SharedData(MasterControlServer masterControlServer, SimpleHttpServer httpServer, EverythingAtHomeServer everythingAtHomeServer) {
-        this.masterControlServer = masterControlServer;
+    public SharedData(CenterServer centerServer, SimpleHttpServer httpServer, SocketIOServer socketIOServer) {
+        this.centerServer = centerServer;
         this.httpServer = httpServer;
-        this.everythingAtHomeServer = everythingAtHomeServer;
+        this.socketIOServer = socketIOServer;
         // this.executor = new TaskExecutor();
         this.clusterStorageHelper = new StorageHelper<>("cluster.dat", Cluster.class);
         this.clusterStorageHelper.load();
         for (Cluster cluster : clusterStorageHelper.elements) {
-            this.masterControlServer.clusters.put(cluster.id, cluster);
+            this.centerServer.clusters.put(cluster.id, cluster);
         }
         this.fileStorageHelper = new StorageHelper<>("files.dat", FileObject.class);
         fileStorageHelper.load();
@@ -35,7 +35,7 @@ public class SharedData {
         tokenStorageHelper.save();
         config.save();
         try {
-            masterControlServer.update();
+            centerServer.update();
         } catch (IOException e) {
         }
     }

@@ -117,16 +117,16 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                if (sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
+                if (sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
                     return null;
                 }
-                String url = sharedData.masterControlServer.requestDownload(httpExchange.getRequestURI().getPath());
+                String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
                 if (url == null) {
                     try {
-                        FileObject file = sharedData.masterControlServer.pathToFile.get(httpExchange.getRequestURI().getPath());
+                        FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
                         FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString());
                         OutputStream stream = httpExchange.getResponseBody();
@@ -157,7 +157,7 @@ public class SimpleHttpServer {
                 Map<String, String> map = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 String id = map.get("clusterId");
                 System.out.println(id);
-                Cluster cluster = sharedData.masterControlServer.clusters.get(id);
+                Cluster cluster = sharedData.centerServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
@@ -179,7 +179,7 @@ public class SimpleHttpServer {
                 String id = requestObject.get("clusterId");
                 String sign = requestObject.get("signature");
                 String challenge = requestObject.get("challenge");
-                Cluster cluster = sharedData.masterControlServer.clusters.get(id);
+                Cluster cluster = sharedData.centerServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
@@ -235,7 +235,7 @@ public class SimpleHttpServer {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
                 }
-                FileObject file = sharedData.masterControlServer.hashToFile.get(hash);
+                FileObject file = sharedData.centerServer.hashToFile.get(hash);
                 if (file == null) {
                     httpExchange.sendResponseHeaders(404, 0);
                     return null;
@@ -256,7 +256,7 @@ public class SimpleHttpServer {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
                 verifyClusterRequest(httpExchange);
-                byte[] bytes = sharedData.masterControlServer.getAvroBytes();
+                byte[] bytes = sharedData.centerServer.getAvroBytes();
                 httpExchange.sendResponseHeaders(200, bytes.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(bytes);
@@ -280,7 +280,7 @@ public class SimpleHttpServer {
                 String id = Utils.generateRandomHexString(24);
                 String secret = Utils.generateRandomHexString(32);
                 Cluster cluster = new Cluster(id, secret, name, bandwidth);
-                sharedData.masterControlServer.clusters.put(id, cluster);
+                sharedData.centerServer.clusters.put(id, cluster);
                 sharedData.clusterStorageHelper.elements.add(cluster);
                 sharedData.saveAll();
                 JSONObject response = new JSONObject();
@@ -312,7 +312,7 @@ public class SimpleHttpServer {
                 String id = (String) object.get("id");
                 String secret = (String) object.get("secret");
                 Cluster cluster = new Cluster(id, secret, name, bandwidth);
-                sharedData.masterControlServer.clusters.put(id, cluster);
+                sharedData.centerServer.clusters.put(id, cluster);
                 sharedData.clusterStorageHelper.elements.add(cluster);
                 JSONObject response = new JSONObject();
                 response.put("id", id);
@@ -355,7 +355,7 @@ public class SimpleHttpServer {
                     httpExchange.close();
                     return null;
                 }
-                String response = JSONObject.toJSONString(sharedData.masterControlServer.getOnlineClusters().toList());
+                String response = JSONObject.toJSONString(sharedData.centerServer.getOnlineClusters().toList());
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
@@ -447,7 +447,7 @@ public class SimpleHttpServer {
                 long size = filePath.toFile().length();
                 long lastModified = filePath.toFile().lastModified();
                 sharedData.fileStorageHelper.elements.add(new FileObject(path, hash, size, lastModified));
-                sharedData.masterControlServer.update();
+                sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
                 response.put("hash", hash);
@@ -475,7 +475,7 @@ public class SimpleHttpServer {
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
                 boolean removed = sharedData.fileStorageHelper.elements.removeIf(fileObject -> fileObject.path.equals(path));
-                sharedData.masterControlServer.update();
+                sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
                 response.put("isRemoved", removed);

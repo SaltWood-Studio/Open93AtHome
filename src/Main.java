@@ -5,9 +5,9 @@ public class Main {
     public static void main(String[] args) throws Exception {
         SimpleHttpServer.key = ClusterJwt.key;
         
-        MasterControlServer masterServer = new MasterControlServer(); // 9300
+        CenterServer masterServer = new CenterServer(); // 9300
         SimpleHttpServer httpServer = new SimpleHttpServer(); // 9388
-        EverythingAtHomeServer everythingServer = new EverythingAtHomeServer();
+        SocketIOServer everythingServer = new SocketIOServer();
         SharedData sharedData = new SharedData(masterServer, httpServer, everythingServer);
         masterServer.sharedData = sharedData;
         httpServer.sharedData = sharedData;

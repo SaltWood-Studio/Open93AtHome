@@ -2,20 +2,19 @@ import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-public class MasterControlServer {
+public class CenterServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
     public final ConcurrentHashMap<String, FileObject> hashToFile;
     public final ConcurrentHashMap<String, Cluster> clusters;
     public SharedData sharedData;
     private byte[] avroBytes;
     
-    public MasterControlServer() {
+    public CenterServer() {
         this.avroBytes = new byte[1];
         this.pathToFile = new ConcurrentHashMap<>();
         this.hashToFile = new ConcurrentHashMap<>();
