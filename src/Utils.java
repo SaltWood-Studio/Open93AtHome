@@ -221,7 +221,7 @@ public class Utils {
                 .build();
         OkHttpClient client = new OkHttpClient();
         Response response = client.newCall(request).execute();
-        if (!file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
+        if (file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
             isValid = true;
         }
         response.close();
