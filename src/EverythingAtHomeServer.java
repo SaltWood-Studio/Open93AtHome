@@ -90,9 +90,8 @@ public class EverythingAtHomeServer {
         
         // Event for receiving message from client
         this.ioServer.addEventListener("disable", Object.class, (client, data, ackRequest) -> {
-            this.sharedData.masterControlServer.onlineClusters.remove(
-                    this.sharedData.masterControlServer.clusters.get(
-                            this.sessions.get(client.getSessionId().toString())));
+            this.sharedData.masterControlServer.onlineClusters.removeIf(
+                    cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())));
             this.sessions.remove(client.getSessionId().toString());
             if (ackRequest.isAckRequested()) {
                 ackRequest.sendAckData("disabled");
@@ -121,9 +120,8 @@ public class EverythingAtHomeServer {
         
         // Event for client disconnect
         this.ioServer.addDisconnectListener(client -> {
-            this.sharedData.masterControlServer.onlineClusters.remove(
-                    this.sharedData.masterControlServer.clusters.get(
-                            this.sessions.get(client.getSessionId().toString())));
+            this.sharedData.masterControlServer.onlineClusters.removeIf(
+                    cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())));
             this.sessions.remove(client.getSessionId().toString());
             System.out.println("Client disconnected: " + client.getSessionId());
         });

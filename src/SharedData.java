@@ -1,6 +1,3 @@
-import modules.TaskExecutor;
-import org.w3c.dom.UserDataHandler;
-
 import java.io.IOException;
 
 
@@ -9,7 +6,7 @@ public class SharedData {
     public MasterControlServer masterControlServer;
     public SimpleHttpServer httpServer;
     public EverythingAtHomeServer everythingAtHomeServer;
-    public TaskExecutor executor;
+    // public TaskExecutor executor;
     public StorageHelper<Cluster> clusterStorageHelper;
     public StorageHelper<FileObject> fileStorageHelper;
     public StorageHelper<Token> tokenStorageHelper;
@@ -18,7 +15,7 @@ public class SharedData {
         this.masterControlServer = masterControlServer;
         this.httpServer = httpServer;
         this.everythingAtHomeServer = everythingAtHomeServer;
-        this.executor = new TaskExecutor();
+        // this.executor = new TaskExecutor();
         this.clusterStorageHelper = new StorageHelper<>("cluster.dat", Cluster.class);
         this.clusterStorageHelper.load();
         for (Cluster cluster : clusterStorageHelper.elements) {
