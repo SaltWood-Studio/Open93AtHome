@@ -1,20 +1,18 @@
 import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class MasterControlServer {
     public final ConcurrentHashMap<String, FileObject> pathToFile;
     public final ConcurrentHashMap<String, FileObject> hashToFile;
     public final ConcurrentHashMap<String, Cluster> clusters;
-    public final ArrayList<Cluster> onlineClusters;
+    private final ArrayList<Cluster> onlineClusters;
     public SharedData sharedData;
     private byte[] avroBytes;
     
@@ -93,14 +91,15 @@ public class MasterControlServer {
         cluster.pendingHits += 1;
         cluster.pendingTraffics += file.size;
         if (sign == null) return null;
-        return "http://" + cluster.ip + ":" + cluster.port + "/download/" + file.hash + sign;
+        return Utils.getUrl(file, cluster, sign);
     }
     
     public Cluster chooseOneCluster() {
         // 从 this.onlineClusters 中随机选择一个并返回
-        synchronized (this.onlineClusters) {
-            if (this.onlineClusters.size() == 0) return null;
-            return this.onlineClusters.get(new Random().nextInt(this.onlineClusters.size()));
+        synchronized (this.getOnlineClusters()) {
+            if (this.getOnlineClusters().count() == 0) return null;
+            List<Cluster> clusters = this.getOnlineClusters().toList();
+            return clusters.get(new Random().nextInt(clusters.size()));
         }
     }
     
@@ -110,21 +109,14 @@ public class MasterControlServer {
         boolean isValid = true;
         Exception exception = null;
         for (int i = 0; i < 8; i++) {
-            FileObject file = getFiles().get(new Random().nextInt(getFiles().size()));
+            FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
             String url = requestDownload(file, cluster);
             try {
-                Request request = new Request.Builder()
-                        .url(url)
-                        .addHeader("User-Agent", SharedData.config.config.userAgent)
-                        .build();
-                OkHttpClient client = new OkHttpClient();
-                Response response = client.newCall(request).execute();
-                if (!file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
-                    isValid = false;
+                isValid = Utils.checkCluster(url, file);
+                if (!isValid){
                     break;
                 }
-                response.close();
-                Thread.sleep(3000);
+                if (i < 7) Thread.sleep(3000);
             } catch (Exception ex) {
                 exception = ex;
                 isValid = false;
@@ -132,9 +124,13 @@ public class MasterControlServer {
             }
         }
         if (isValid) {
-            this.onlineClusters.add(cluster);
+            cluster.isOnline = true;
         } else {
             throw new Exception("Unable to download files from the cluster: " + exception.getMessage());
         }
+    }
+    
+    public Stream<Cluster> getOnlineClusters() {
+        return this.clusters.values().stream().filter(cluster -> cluster.isOnline);
     }
 }

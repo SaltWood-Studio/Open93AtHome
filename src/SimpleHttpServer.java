@@ -355,7 +355,7 @@ public class SimpleHttpServer {
                     httpExchange.close();
                     return null;
                 }
-                String response = JSONObject.toJSONString(sharedData.masterControlServer.onlineClusters);
+                String response = JSONObject.toJSONString(sharedData.masterControlServer.getOnlineClusters());
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();

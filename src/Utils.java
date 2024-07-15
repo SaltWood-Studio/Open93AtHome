@@ -3,11 +3,15 @@ import com.sun.net.httpserver.Headers;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -207,6 +211,32 @@ public class Utils {
                 }
             }
         }
+    }
+    
+    public static boolean checkCluster(String url, FileObject file) throws IOException {
+        boolean isValid = false;
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", SharedData.config.config.userAgent)
+                .build();
+        OkHttpClient client = new OkHttpClient();
+        Response response = client.newCall(request).execute();
+        if (!file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
+            isValid = true;
+        }
+        response.close();
+        return isValid;
+    }
+    
+    public static <T> T random(List<T> list) {
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(new Random().nextInt(list.size()));
+    }
+    
+    public static String getUrl(FileObject file, Cluster cluster, String sign) {
+        return "http://" + cluster.ip + ":" + cluster.port + "/download/" + file.hash + sign;
     }
 }
 

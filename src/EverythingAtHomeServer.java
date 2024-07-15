@@ -67,6 +67,7 @@ public class EverythingAtHomeServer {
             try {
                 if (sharedData.masterControlServer.getFiles().size() > 0) {
                     sharedData.masterControlServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
+                    cluster.startWarden(sharedData.fileStorageHelper.elements);
                 }
                 enabled = true;
             } catch (Exception e) {
@@ -74,8 +75,8 @@ public class EverythingAtHomeServer {
             }
             if (ackRequest.isAckRequested()) {
                 if (enabled) {
-                    if (sharedData.masterControlServer.onlineClusters.stream().noneMatch(c -> c.id.equals(cluster.id))) {
-                        sharedData.masterControlServer.onlineClusters.add(cluster);
+                    if (sharedData.masterControlServer.getOnlineClusters().noneMatch(c -> c.id.equals(cluster.id))) {
+                        sharedData.masterControlServer.clusters.get(cluster.id).isOnline = true;
                     }
                     ackRequest.sendAckData((Object) new Object[]{null, true});
                 } else {
@@ -91,8 +92,9 @@ public class EverythingAtHomeServer {
         
         // Event for receiving message from client
         this.ioServer.addEventListener("disable", Object.class, (client, data, ackRequest) -> {
-            this.sharedData.masterControlServer.onlineClusters.removeIf(
-                    cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())));
+            String id = sessions.get(client.getSessionId().toString());
+            this.sharedData.masterControlServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
+                    .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
             if (ackRequest.isAckRequested()) {
                 ackRequest.sendAckData("disabled");
@@ -102,8 +104,8 @@ public class EverythingAtHomeServer {
         // Event for receiving message from client
         this.ioServer.addEventListener("keep-alive", Object.class, (client, data, ackRequest) -> {
             if (ackRequest.isAckRequested()) {
-                if (sharedData.masterControlServer.onlineClusters
-                        .stream().anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
+                if (sharedData.masterControlServer.getOnlineClusters()
+                        .anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
                     Map<String, Object> request = (Map<String, Object>) data;
                     Integer hits = (Integer) request.get("hits");
                     Integer bytes = (Integer) request.get("bytes");
@@ -121,8 +123,9 @@ public class EverythingAtHomeServer {
         
         // Event for client disconnect
         this.ioServer.addDisconnectListener(client -> {
-            this.sharedData.masterControlServer.onlineClusters.removeIf(
-                    cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())));
+            String id = sessions.get(client.getSessionId().toString());
+            this.sharedData.masterControlServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
+                    .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
             System.out.println("Client disconnected: " + client.getSessionId());
         });
