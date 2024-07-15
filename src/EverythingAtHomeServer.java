@@ -105,8 +105,8 @@ public class EverythingAtHomeServer {
                 if (sharedData.masterControlServer.onlineClusters
                         .stream().anyMatch(cluster -> cluster.id.equals(this.sessions.get(client.getSessionId().toString())))) {
                     Map<String, Object> request = (Map<String, Object>) data;
-                    Long hits = (Long) request.get("hits");
-                    Long bytes = (Long) request.get("bytes");
+                    Integer hits = (Integer) request.get("hits");
+                    Integer bytes = (Integer) request.get("bytes");
                     Cluster cluster = sharedData.masterControlServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
                     cluster.hits += Math.min(cluster.pendingHits, hits);
                     cluster.traffics += Math.min(cluster.pendingTraffics, bytes);

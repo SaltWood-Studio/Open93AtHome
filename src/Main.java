@@ -20,8 +20,7 @@ public class Main {
         
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            sharedData.fileStorageHelper.save();
-            sharedData.clusterStorageHelper.save();
+            sharedData.saveAll();
             httpServer.stop();
             everythingServer.stop();
         }));
