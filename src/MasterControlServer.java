@@ -108,7 +108,8 @@ public class MasterControlServer {
         Exception exception = null;
         for (int i = 0; i < 8; i++) {
             FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
-            String url = requestDownload(file, cluster);
+            String sign = Utils.getSign(file, cluster);
+            String url = Utils.getUrl(file, cluster, sign);
             try {
                 isValid = Utils.checkCluster(url, file);
                 if (!isValid){
