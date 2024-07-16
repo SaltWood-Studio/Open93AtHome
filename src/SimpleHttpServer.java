@@ -589,7 +589,7 @@ public class SimpleHttpServer {
                             newFiles.add(file);
                         }
                     }
-                    sharedData.clusterStorageHelper.elements.forEach(cluster -> {
+                    sharedData.centerServer.getOnlineClusters().forEach(cluster -> {
                         for (FileObject object: newFiles) {
                             try {
                                 boolean isValid = cluster.doWardenOnce(object);
