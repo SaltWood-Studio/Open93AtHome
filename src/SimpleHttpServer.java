@@ -37,6 +37,7 @@ public class SimpleHttpServer {
     public void start() {
         start(false);
     }
+    private Thread fileUpdateThread;
     
     public void start(boolean forceHttp) {
         try {
@@ -518,7 +519,47 @@ public class SimpleHttpServer {
                     httpExchange.close();
                     return null;
                 }
-                new Thread(() -> {
+                if (fileUpdateThread != null && fileUpdateThread.isAlive()) {
+                    byte[] bytes = """
+                            <!DOCTYPE html>
+                            <html lang="zh-CN">
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>Conflict!</title>
+                                <style>
+                                    body {
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        align-items: center;
+                                        height: 100vh;
+                                        margin: 0;
+                                        font-family: Arial, sans-serif;
+                                    }
+                                    h1 {
+                                        font-size: 3em;
+                                        margin-bottom: 20px;
+                                    }
+                                    iframe {
+                                        width: 80%;
+                                        height: 60%;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <h1>HTTP status code: 409 Conflict!</h1>
+                                <iframe src="https:////player.bilibili.com/player.html?isOutside=true&aid=989089&bvid=BV1xs411Z7vw&cid=1429753&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+                            </body>
+                            </html>""".getBytes();
+                    httpExchange.sendResponseHeaders(409, bytes.length);
+                    OutputStream os = httpExchange.getResponseBody();
+                    
+                    os.write(bytes);
+                    os.close();
+                    return null;
+                }
+                fileUpdateThread = new Thread(() -> {
                     ProcessBuilder processBuilder = new ProcessBuilder();
                     processBuilder.directory(new File(SharedData.config.config.filePath));
                     processBuilder.command("git", "pull");
@@ -530,7 +571,8 @@ public class SimpleHttpServer {
                         e.printStackTrace();
                     }
                     Set<String> set = Utils.scanFiles(Path.of(SharedData.config.config.filePath).toFile().getAbsolutePath());
-                    sharedData.fileStorageHelper.elements.clear();
+                    List<FileObject> oldFiles = sharedData.fileStorageHelper.elements;
+                    sharedData.fileStorageHelper.elements = new ArrayList<>();
                     for (String file : set) {
                         FileObject f;
                         try {
@@ -541,7 +583,14 @@ public class SimpleHttpServer {
                         sharedData.fileStorageHelper.elements.add(f);
                     }
                     sharedData.saveAll();
-                }).start();
+                    List<FileObject> newFiles = new ArrayList<>();
+                    for (FileObject file : sharedData.fileStorageHelper.elements) {
+                        if (!oldFiles.stream().anyMatch(f -> f.hash.equals(file.hash))) {
+                            newFiles.add(file);
+                        }
+                    }
+                });
+                fileUpdateThread.start();
                 httpExchange.sendResponseHeaders(204, -1);
                 return null;
             }
