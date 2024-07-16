@@ -589,6 +589,20 @@ public class SimpleHttpServer {
                             newFiles.add(file);
                         }
                     }
+                    sharedData.clusterStorageHelper.elements.forEach(cluster -> {
+                        for (FileObject object: newFiles) {
+                            try {
+                                boolean isValid = cluster.doWardenOnce(object);
+                                if (!isValid) {
+                                    cluster.isOnline = false;
+                                    break;
+                                }
+                                Thread.sleep(3000);
+                            } catch (Exception e) {
+                                cluster.isOnline = false;
+                            }
+                        }
+                    });
                 });
                 fileUpdateThread.start();
                 httpExchange.sendResponseHeaders(204, -1);

@@ -1,5 +1,6 @@
 import com.alibaba.fastjson2.annotation.JSONField;
 
+import java.io.IOException;
 import java.util.List;
 
 public class Cluster {
@@ -57,9 +58,7 @@ public class Cluster {
                         break;
                     }
                     FileObject file = Utils.random(files);
-                    String sign = Utils.getSign(file, this);
-                    String url = Utils.getUrl(file, this, sign);
-                    boolean isValid = Utils.checkCluster(url, file);
+                    boolean isValid = this.doWardenOnce(file);
                     if (!isValid) {
                         this.isOnline = false;
                         this.wardenThread = null;
@@ -68,5 +67,11 @@ public class Cluster {
                 }
             } catch (Exception e) {}
         });
+    }
+    
+    public boolean doWardenOnce(FileObject file) throws IOException {
+        String sign = Utils.getSign(file, this);
+        String url = Utils.getUrl(file, this, sign);
+        return Utils.checkCluster(url, file);
     }
 }
