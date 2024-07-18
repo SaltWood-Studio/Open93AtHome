@@ -2,6 +2,7 @@ package modules;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class AvroEncoder {
     public ByteArrayOutputStream byteStream;
@@ -11,18 +12,18 @@ public class AvroEncoder {
     }
     
     public void setElements(int count) throws IOException {
-        this.byteStream.write(this.writeLong(count));
+        this.byteStream.write(longToByte(count));
     }
     
     public void setLong(long value) throws IOException {
-        this.byteStream.write(this.writeLong(value));
+        this.byteStream.write(longToByte(value));
     }
     
     public void setString(String value) throws IOException {
-        this.byteStream.write(this.writeString(value));
+        this.byteStream.write(stringToByte(value));
     }
     
-    public byte[] writeLong(long value) throws IOException {
+    public static byte[] longToByte(long value) throws IOException {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
         long data = (value << 1) ^ (value >> 63);
         while ((data & ~0x7F) != 0) {
@@ -34,16 +35,16 @@ public class AvroEncoder {
         return o.toByteArray();
     }
     
-    public byte[] writeString(String value) throws IOException {
+    public static byte[] stringToByte(String value) throws IOException {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
-        byte[] bytes = value.getBytes("UTF-8");
-        o.write(writeLong(bytes.length));
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        o.write(longToByte(bytes.length));
         o.write(bytes);
         o.close();
         return o.toByteArray();
     }
     
     public void setEnd(){
-        this.byteStream.write(0);
+        this.byteStream.write(0x00);
     }
 }

@@ -263,7 +263,7 @@ public class SimpleHttpServer {
                 Map<String, String> query = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 byte[] bytes;
                 if (query.containsKey("lastModified")){
-                    Long lastModified = Long.parseLong(query.get("lastModified"));
+                    double lastModified = Double.parseDouble(query.get("lastModified"));
                     List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();

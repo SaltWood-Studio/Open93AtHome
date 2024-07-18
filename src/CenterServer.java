@@ -68,8 +68,8 @@ public class CenterServer {
             }
             encoder.setEnd();
         }
-        encoder.byteStream.close();
         byte[] bytes = encoder.byteStream.toByteArray();
+        encoder.byteStream.close();
         return Zstd.compress(bytes);
     }
     
