@@ -58,7 +58,7 @@ public class CenterServer {
     
     public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
         AvroEncoder encoder = new AvroEncoder();
-        byte[] avroBytes = null;
+        byte[] avroBytes = new byte[0];
         synchronized (elements) {
             encoder.setElements(elements.size());
             for (FileObject file : elements) {
