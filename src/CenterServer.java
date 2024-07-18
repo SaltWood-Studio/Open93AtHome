@@ -64,7 +64,9 @@ public class CenterServer {
         }
         encoder.byteStream.close();
         synchronized (this.avroBytes) {
-            this.avroBytes = Zstd.compress(encoder.byteStream.toByteArray());
+            byte[] bytes = new byte[encoder.byteStream.size() + 1];
+            System.arraycopy(encoder.byteStream.toByteArray(), 0, bytes, 0, encoder.byteStream.size());
+            this.avroBytes = Zstd.compress(bytes);
         }
     }
     
