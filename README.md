@@ -13,11 +13,12 @@
 
 以下是基于修改现有 OpenBMCLAPI 节点端的办法
 
-### [Node 端](https://github.com/bangbang93/openbmclapi)
+### [Node 端](https://github.com/bangbang93/openbmclapi)(以下方法二选一)
 
 | 位置                 | 目的     | 做法                                                                                |
 |--------------------|--------|-----------------------------------------------------------------------------------|
 | **cluster.ts** L59 | 修改上线地址 | 修改 `private readonly prefixUrl = process.env.CLUSTER_BMCLAPI ??` 后面的值或直接修改传入的环境变量 |
+| **.env** | 修改上线地址 | 增加 CLUSTER_BMCLAPI=http://saltwood.top:9393/ |
 
 ### [Go 端](https://github.com/LiterMC/go-openbmclapi)
 
