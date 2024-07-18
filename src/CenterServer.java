@@ -2,6 +2,7 @@ import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,10 +53,15 @@ public class CenterServer {
     }
     
     public void refreshAvroBytes() throws IOException {
+        this.avroBytes = computeAvroBytes(this.sharedData.fileStorageHelper.elements);
+    }
+    
+    public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
         AvroEncoder encoder = new AvroEncoder();
-        synchronized (this.sharedData.fileStorageHelper.elements) {
-            encoder.setElements(this.sharedData.fileStorageHelper.elements.size());
-            for (FileObject file : this.sharedData.fileStorageHelper.elements) {
+        byte[] avroBytes = null;
+        synchronized (elements) {
+            encoder.setElements(elements.size());
+            for (FileObject file : elements) {
                 encoder.setString(file.path);
                 encoder.setString(file.hash);
                 encoder.setLong(file.size);
@@ -63,11 +69,12 @@ public class CenterServer {
             }
         }
         encoder.byteStream.close();
-        synchronized (this.avroBytes) {
+        synchronized (avroBytes) {
             byte[] bytes = new byte[encoder.byteStream.size() + 1];
             System.arraycopy(encoder.byteStream.toByteArray(), 0, bytes, 0, encoder.byteStream.size());
-            this.avroBytes = Zstd.compress(bytes);
+            avroBytes = Zstd.compress(bytes);
         }
+        return avroBytes;
     }
     
     public String requestDownload(String path) {

@@ -260,7 +260,17 @@ public class SimpleHttpServer {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
                 verifyClusterRequest(httpExchange);
-                byte[] bytes = sharedData.centerServer.getAvroBytes();
+                Map<String, String> query = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
+                byte[] bytes;
+                if (query.containsKey("lastModified")){
+                    Long lastModified = Long.parseLong(query.get("lastModified"));
+                    List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
+                            .filter(file -> file.lastModified > lastModified)
+                            .toList();
+                    bytes = CenterServer.computeAvroBytes(objects);
+                } else {
+                    bytes = sharedData.centerServer.getAvroBytes();
+                }
                 httpExchange.sendResponseHeaders(200, bytes.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(bytes);
