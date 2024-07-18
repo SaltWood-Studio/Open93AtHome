@@ -42,4 +42,8 @@ public class AvroEncoder {
         o.close();
         return o.toByteArray();
     }
+    
+    public void setEnd(){
+        this.byteStream.write(0);
+    }
 }

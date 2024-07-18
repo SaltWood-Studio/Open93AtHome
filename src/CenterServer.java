@@ -66,11 +66,10 @@ public class CenterServer {
                 encoder.setLong(file.size);
                 encoder.setLong(file.lastModified);
             }
+            encoder.setEnd();
         }
         encoder.byteStream.close();
-        byte[] rawBytes = encoder.byteStream.toByteArray();
-        byte[] bytes = new byte[rawBytes.length + 1];
-        System.arraycopy(rawBytes, 0, bytes, 0, rawBytes.length);
+        byte[] bytes = encoder.byteStream.toByteArray();
         return Zstd.compress(bytes);
     }
     
