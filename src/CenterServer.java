@@ -58,7 +58,6 @@ public class CenterServer {
     
     public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
         AvroEncoder encoder = new AvroEncoder();
-        byte[] avroBytes = new byte[0];
         synchronized (elements) {
             encoder.setElements(elements.size());
             for (FileObject file : elements) {
@@ -69,12 +68,10 @@ public class CenterServer {
             }
         }
         encoder.byteStream.close();
-        synchronized (avroBytes) {
-            byte[] bytes = new byte[encoder.byteStream.size() + 1];
-            System.arraycopy(encoder.byteStream.toByteArray(), 0, bytes, 0, encoder.byteStream.size());
-            avroBytes = Zstd.compress(bytes);
-        }
-        return avroBytes;
+        byte[] rawBytes = encoder.byteStream.toByteArray();
+        byte[] bytes = new byte[rawBytes.length + 1];
+        System.arraycopy(rawBytes, 0, bytes, 0, rawBytes.length);
+        return Zstd.compress(bytes);
     }
     
     public String requestDownload(String path) {
