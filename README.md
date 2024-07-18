@@ -12,12 +12,19 @@
 ## 部署
 
 以下是基于修改现有 OpenBMCLAPI 节点端的办法
+> [!IMPORTANT]
+> 以下方法仅在 **Node、Python、CSharp、PHP 端**进行了测试，其他端的方法理论可行但未经验证。
+> 遇到不可行请自信解决或开 issue 进行询问，不要当作 bug 发到人家仓库去
 
 ### [Node 端](https://github.com/bangbang93/openbmclapi)
-
-| 位置                 | 目的     | 做法                                                                                |
-|--------------------|--------|-----------------------------------------------------------------------------------|
-| **cluster.ts** L59 | 修改上线地址 | 修改 `private readonly prefixUrl = process.env.CLUSTER_BMCLAPI ??` 后面的值或直接修改传入的环境变量 |
+#### 基于修改源代码
+| 位置                 | 目的     | 做法                                                                    |
+|--------------------|--------|-----------------------------------------------------------------------|
+| **cluster.ts** L59 | 修改上线地址 | 修改 `private readonly prefixUrl = process.env.CLUSTER_BMCLAPI ??` 后面的值 |
+#### 基于修改环境变量
+| 位置       | 目的     | 做法                     |
+|----------|--------|------------------------|
+| **.env** | 修改上线地址 | `CLUSTER_BMCLAPI=上线地址` |
 
 ### [Go 端](https://github.com/LiterMC/go-openbmclapi)
 
