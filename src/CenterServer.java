@@ -115,11 +115,11 @@ public class CenterServer {
             String sign = Utils.getSign(file, cluster);
             String url = Utils.getUrl(file, cluster, sign);
             try {
+                Thread.sleep(3000);
                 isValid = Utils.checkCluster(url, file);
                 if (!isValid){
                     break;
                 }
-                if (i < 7) Thread.sleep(3000);
             } catch (Exception ex) {
                 exception = ex;
                 isValid = false;
