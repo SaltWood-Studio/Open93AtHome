@@ -5,24 +5,28 @@ public class Main {
     public static void main(String[] args) throws Exception {
         SimpleHttpServer.key = ClusterJwt.key;
         
-        CenterServer masterServer = new CenterServer(); // 9300
+        CenterServer centerServer = new CenterServer(); // 9300
         SimpleHttpServer httpServer = new SimpleHttpServer(); // 9388
-        SocketIOServer everythingServer = new SocketIOServer();
-        SharedData sharedData = new SharedData(masterServer, httpServer, everythingServer);
-        masterServer.sharedData = sharedData;
+        SocketIOServer socketIOServer = new SocketIOServer();
+        SharedData sharedData = new SharedData(centerServer, httpServer, socketIOServer);
+        centerServer.sharedData = sharedData;
         httpServer.sharedData = sharedData;
-        everythingServer.sharedData = sharedData;
-        masterServer.update();
+        socketIOServer.sharedData = sharedData;
+        centerServer.update();
         httpServer.start(true);
-        everythingServer.start();
+        socketIOServer.start();
         
         sharedData.fileStorageHelper.save();
         
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            socketIOServer.ioServer.getAllClients().forEach(client -> {
+                client.sendEvent("disconnect", "Stopping server.");
+                client.disconnect();
+            });
             sharedData.saveAll();
             httpServer.stop();
-            everythingServer.stop();
+            socketIOServer.stop();
         }));
     }
 }
