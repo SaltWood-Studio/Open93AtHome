@@ -259,7 +259,7 @@ public class SimpleHttpServer {
         this.server.createContext("/openbmclapi/files", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {
-                verifyClusterRequest(httpExchange);
+                // verifyClusterRequest(httpExchange);
                 Map<String, String> query = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 byte[] bytes;
                 if (query.containsKey("lastModified")){

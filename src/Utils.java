@@ -153,6 +153,7 @@ public class Utils {
     }
     
     public static Map parseBodyToDictionary(String string) {
+        if (string == null || string.isEmpty()) return new HashMap();
         if (string.startsWith("{")) {
             return JSONObject.parseObject(string).toJavaObject(Map.class);
         } else {
