@@ -267,6 +267,10 @@ public class SimpleHttpServer {
                     List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
+                    if (objects.isEmpty()) {
+                        httpExchange.sendResponseHeaders(204, 0);
+                        return null;
+                    }
                     bytes = CenterServer.computeAvroBytes(objects);
                 } else {
                     bytes = sharedData.centerServer.getAvroBytes();
