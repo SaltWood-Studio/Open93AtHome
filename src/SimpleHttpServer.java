@@ -268,7 +268,7 @@ public class SimpleHttpServer {
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
                     if (objects.isEmpty()) {
-                        httpExchange.sendResponseHeaders(204, 0);
+                        httpExchange.sendResponseHeaders(204, -1);
                         return null;
                     }
                     bytes = CenterServer.computeAvroBytes(objects);

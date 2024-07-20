@@ -21,7 +21,6 @@ public class Main {
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             socketIOServer.ioServer.getAllClients().forEach(client -> {
-                client.sendEvent("disconnect", "Stopping server.");
                 client.disconnect();
             });
             sharedData.saveAll();

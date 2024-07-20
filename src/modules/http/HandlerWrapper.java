@@ -14,8 +14,10 @@ public class HandlerWrapper implements HttpHandler {
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.bytes);
             }
+            String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
+            remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
             System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
-                    + exchange.getResponseCode() + " [" + exchange.getRemoteAddress().toString() + "]");
+                    + exchange.getResponseCode() + " [" + remoteAddress + "]");
             exchange.close();
         } catch (Exception e) {
             e.printStackTrace();
