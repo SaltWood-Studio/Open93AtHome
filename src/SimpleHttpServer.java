@@ -108,7 +108,7 @@ public class SimpleHttpServer {
     
     protected void verifyClusterRequest(HttpExchange exchange) throws Exception {
         String auth = Utils.tryGetInDictionary(exchange.getRequestHeaders(), "Authorization");
-        if (auth == null) return;
+        if (auth == null) throw new Exception("Invalid request");
         String jwt = Arrays.stream(auth.split(" ")).reduce((first, second) -> second).orElse(null);
         boolean isValid = Utils.verifyJwt(jwt, key);
         if (!isValid) throw new Exception("Invalid JWT");
