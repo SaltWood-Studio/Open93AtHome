@@ -14,13 +14,13 @@ public class HandlerWrapper implements HttpHandler {
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.bytes);
             }
+            exchange.close();
+        } catch (Exception e) {
+            e.printStackTrace();
             String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
             remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
             System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
                     + exchange.getResponseCode() + " [" + remoteAddress + "]");
-            exchange.close();
-        } catch (Exception e) {
-            e.printStackTrace();
             exchange.close();
         }
     }
