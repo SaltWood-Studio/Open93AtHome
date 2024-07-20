@@ -17,12 +17,12 @@ public class HandlerWrapper implements HttpHandler {
             exchange.close();
         } catch (Exception e) {
             e.printStackTrace();
-            String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
-            remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
-            System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
-                    + exchange.getResponseCode() + " [" + remoteAddress + "]");
-            exchange.close();
         }
+        String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
+        remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
+        System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
+                + exchange.getResponseCode() + " [" + remoteAddress + "]");
+        exchange.close();
     }
     
     public Response execute(HttpExchange exchange) throws Exception {
