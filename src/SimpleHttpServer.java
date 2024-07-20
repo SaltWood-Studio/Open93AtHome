@@ -158,7 +158,6 @@ public class SimpleHttpServer {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Map<String, String> map = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 String id = map.get("clusterId");
-                System.out.println(id);
                 Cluster cluster = sharedData.centerServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
