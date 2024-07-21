@@ -25,7 +25,7 @@ public class SharedData {
         fileStorageHelper.load();
         this.tokenStorageHelper = new StorageHelper<>("tokens.dat", Token.class);
         this.tokenStorageHelper.load();
-        config = new ConfigHelper("config.dat");
+        config = new ConfigHelper("config.json");
         config.load();
     }
     

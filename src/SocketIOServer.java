@@ -49,7 +49,7 @@ public class SocketIOServer {
                     this.sessions.put(client.getSessionId().toString(), id);
                 }
             }
-            client.sendEvent("message", "Welcome to Open93@Home (v" + SharedData.config.config.version +")! You can find us at https://github.com/SaltWood-Studio/Open93AtHome.");
+            client.sendEvent("message", "Welcome to Open93@Home (v" + Config.version +")! You can find us at https://github.com/SaltWood-Studio/Open93AtHome.");
             System.out.println("Client connected: " + client.getSessionId());
         });
         
