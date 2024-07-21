@@ -166,6 +166,14 @@ public class SimpleHttpServer {
                 return null;
             }
         });
+        this.server.createContext("/robots.txt", new HandlerWrapper() {
+            @Override
+            public Response execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.sendResponseHeaders(200, Utils.robotsTip.length);
+                httpExchange.getResponseBody().write(Utils.robotsTip);
+                return null;
+            }
+        });
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
             public Response execute(HttpExchange httpExchange) throws Exception {

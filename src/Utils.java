@@ -28,6 +28,9 @@ import java.util.*;
 
 public class Utils {
     public static final byte[] forbiddenTip = "403 Forbidden.".getBytes();
+    public static final byte[] robotsTip = """
+            User-agent: *
+            Disallow: /""".getBytes();
     
     public static String generateRandomHexString(int length) {
         SecureRandom secureRandom = new SecureRandom();
