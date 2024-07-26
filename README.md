@@ -6,7 +6,7 @@
 ## 简介
 
 这是一个类似于 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) **主控端**的分发文件项目
-> [!IMPORTANT]
+> [!TIP]
 > 本项目实际可被用于分发任何有效 Git 仓库内的文件，因此并不与 bangbang93HUB 有任何关联
 
 ## 部署
@@ -14,7 +14,7 @@
 以下是基于修改现有 OpenBMCLAPI 节点端的办法
 > [!IMPORTANT]
 > 以下方法仅在 **Node、Python、CSharp、PHP 端**进行了测试，其他端的方法理论可行但未经验证。
-> 遇到不可行请自信解决或开 issue 进行询问，不要当作 bug 发到人家仓库去
+> 遇到不可行请自行解决或开 issue 进行询问，不要当作 bug 发到人家仓库去
 
 ### [Node 端](https://github.com/bangbang93/openbmclapi)
 以下方法二选一，根据实际情况
