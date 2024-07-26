@@ -14,7 +14,7 @@
 以下是基于修改现有 OpenBMCLAPI 节点端的办法
 > [!IMPORTANT]
 > 以下方法仅在 **Node、Python、CSharp、PHP 端**进行了测试，其他端的方法理论可行但未经验证。
-> 遇到不可行请自行解决或开 issue 进行询问，不要当作 bug 发到人家仓库去
+> 如果不行请自行解决或开 issue 进行询问，不要当作 bug 发到人家仓库去
 
 ### [Node 端](https://github.com/bangbang93/openbmclapi)
 以下方法二选一，根据实际情况
@@ -34,7 +34,7 @@
 | **dist/cluster.js** L38 | 修改白名单 | 修改 `const whiteListDomain = ['localhost', 'bangbang93.com'];`，添加上你上线的域名 |
 | **cluster.js** L46      | 修改白名单 | 修改 `const whiteListDomain = ['localhost', 'bangbang93.com'];`，添加上你上线的域名 |
 #### 域名欺骗法
-使用你的域名，新建一个 **CNAME** 解析（也可以用别的，不作赘述），名称为 `bangbang93.com.xxxxxx`或者`localhost.xxxxxx`（后面接你的域名，总之含有`bangbang93.com`或者`lcoalhost`的关键词就行），解析到服务器地址，然后将上线地址改成该地址
+使用你的域名，新建一个 **CNAME** 解析（也可以用别的，不作赘述），名称为 `bangbang93.com.xxxxxx`或者`localhost.xxxxxx`（后面接你的域名，总之含有`bangbang93.com`或者`localhost`的关键词就行），解析到服务器地址，然后将上线地址改成该地址
 
 ### [Go 端](https://github.com/LiterMC/go-openbmclapi)
 
