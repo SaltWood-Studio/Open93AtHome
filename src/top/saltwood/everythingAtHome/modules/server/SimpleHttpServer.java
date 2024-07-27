@@ -185,6 +185,10 @@ public class SimpleHttpServer {
                     httpExchange.sendResponseHeaders(404, 0);
                     return;
                 }
+                if (cluster.isBanned) {
+                    httpExchange.sendResponseHeaders(403, 0);
+                    return;
+                }
                 JSONObject object = new JSONObject();
                 object.put("challenge", ClusterJwt.generateJwtToken("challenge",
                         1000 * 60 * 60L, key, ALGORITHM, id).compact());

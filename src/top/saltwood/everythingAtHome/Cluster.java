@@ -22,6 +22,7 @@ public class Cluster {
     public boolean isOnline = false;
     @JSONField(serialize = false)
     private Thread wardenThread;
+    public boolean isBanned;
     
     public Cluster(String id, String secret, String name, int bandwidth) {
         this.id = id;
@@ -32,6 +33,7 @@ public class Cluster {
         this.traffics = 0L;
         this.pendingHits = 0L;
         this.pendingTraffics = 0L;
+        this.isBanned = false;
     }
     
     public Long getTraffics() {
@@ -52,6 +54,7 @@ public class Cluster {
     
     public void startWarden(List<FileObject> files) {
         this.isOnline = true;
+        if (this.wardenThread != null && this.wardenThread.isAlive()) return;
         this.wardenThread = new Thread(() -> {
             try {
                 while (this.isOnline) {
