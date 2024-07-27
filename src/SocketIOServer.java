@@ -84,7 +84,7 @@ public class SocketIOServer {
                     final String message = exception != null ? exception.getMessage() : "Failed to enable";
                     ackRequest.sendAckData((Object) new Object[]{new HashMap<String, String>() {
                         {
-                            put("message", "Failed: " + message);
+                            put("message", "Failed to enable, error: " + message);
                         }
                     }});
                 }

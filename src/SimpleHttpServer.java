@@ -188,7 +188,6 @@ public class SimpleHttpServer {
                 JSONObject object = new JSONObject();
                 object.put("challenge", ClusterJwt.generateJwtToken("challenge",
                         1000 * 60 * 60L, key, ALGORITHM, id).compact());
-                httpExchange.getResponseHeaders().add("Content-Type", "application/json");
                 Response resp = new Response();
                 resp.bytes = object.toJSONString().getBytes();
                 resp.responseCode = 200;
