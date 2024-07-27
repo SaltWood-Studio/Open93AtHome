@@ -557,7 +557,8 @@ public class SimpleHttpServer {
                         try {
                             f = new FileObject(file);
                         } catch (FileNotFoundException e) {
-                            throw new RuntimeException(e);
+                            sharedData.fileStorageHelper.elements = oldFiles;
+                            return;
                         }
                         sharedData.fileStorageHelper.elements.add(f);
                     }
@@ -571,12 +572,12 @@ public class SimpleHttpServer {
                     sharedData.centerServer.getOnlineClusters().forEach(cluster -> {
                         for (FileObject object : newFiles) {
                             try {
+                                Thread.sleep(3000);
                                 boolean isValid = cluster.doWardenOnce(object);
                                 if (!isValid) {
                                     cluster.isOnline = false;
                                     break;
                                 }
-                                Thread.sleep(3000);
                             } catch (Exception e) {
                                 cluster.isOnline = false;
                             }

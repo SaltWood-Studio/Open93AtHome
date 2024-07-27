@@ -16,6 +16,8 @@ public class Main {
         centerServer.sharedData = sharedData;
         httpServer.sharedData = sharedData;
         socketIOServer.sharedData = sharedData;
+        Logger.logger.log("Checking files...");
+        centerServer.check();
         centerServer.update();
         httpServer.start(true);
         socketIOServer.start();

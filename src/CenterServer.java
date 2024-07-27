@@ -1,7 +1,11 @@
 import com.github.luben.zstd.Zstd;
 import modules.AvroEncoder;
+import modules.Config;
+import modules.cluster.Logger;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -135,5 +139,17 @@ public class CenterServer {
     
     public Stream<Cluster> getOnlineClusters() {
         return this.clusters.values().stream().filter(cluster -> cluster.isOnline);
+    }
+    
+    public void check() {
+        for (FileObject fileObject : this.sharedData.fileStorageHelper.elements) {
+            File file = Path.of(SharedData.config.config.filePath, fileObject.path).toFile();
+            // 检查文件是否存在
+            if (!file.exists()){
+                Logger.logger.log("File not found: " + fileObject.path);
+                // 从文件存储中删除
+                this.sharedData.fileStorageHelper.elements.removeIf(f -> f.path.equals(fileObject.path));
+            }
+        }
     }
 }
