@@ -213,7 +213,7 @@ public class Utils {
     
     public static double measureCluster(Cluster cluster, int size) throws IOException {
         String sign = Utils.getSign("/measure/" + size, cluster);
-        String url = "http://" + cluster.ip + ":" + cluster.port + "/measure/" + size + "?sign=" + sign;
+        String url = "http://" + cluster.ip + ":" + cluster.port + "/measure/" + size + sign;
         double time = Utils.requestForTime(url, 1024L * 1024 * size);
         return (size * 8 * 1000) / time;
     }
