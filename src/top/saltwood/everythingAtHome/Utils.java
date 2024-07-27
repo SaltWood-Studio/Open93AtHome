@@ -19,6 +19,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -229,8 +230,13 @@ public class Utils {
         long start = System.currentTimeMillis();
         Response response = client.newCall(request).execute();
         if (response.body() != null && response.body().contentLength() != size) {
+            response.close();
             return -1;
         }
+        InputStream is = response.body().byteStream();
+        is.skip(size * 1024 * 1024);
+        is.close();
+        response.close();
         return (System.currentTimeMillis() - start);
     }
     
