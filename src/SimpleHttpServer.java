@@ -185,7 +185,9 @@ public class SimpleHttpServer {
                 JSONObject object = new JSONObject();
                 object.put("challenge", ClusterJwt.generateJwtToken("challenge",
                         1000 * 60 * 60L, key, ALGORITHM, id).compact());
-                httpExchange.getResponseBody().write(object.toJSONString().getBytes(StandardCharsets.UTF_8));
+                byte[] bytes = object.toJSONString().getBytes(StandardCharsets.UTF_8);
+                httpExchange.sendResponseHeaders(200, bytes.length);
+                httpExchange.getResponseBody().write(bytes);
             }
         });
         this.server.createContext("/openbmclapi-agent/token", new HandlerWrapper() {
@@ -234,7 +236,9 @@ public class SimpleHttpServer {
                 sync.put("concurrency", 10);
                 JSONObject object = new JSONObject();
                 object.put("sync", sync);
-                httpExchange.getResponseBody().write(object.toJSONString().getBytes());
+                byte[] bytes = object.toJSONString().getBytes(StandardCharsets.UTF_8);
+                httpExchange.sendResponseHeaders(200, bytes.length);
+                httpExchange.getResponseBody().write(bytes);
             }
         });
         this.server.createContext("/openbmclapi/download", new HandlerWrapper() {
