@@ -9,7 +9,7 @@ public class Logger {
     
     public static Logger getInstance() { return logger; }
     
-    public void log(String message) {
+    public void log(Object message) {
         synchronized (_lock) {
             System.out.println(message);
         }

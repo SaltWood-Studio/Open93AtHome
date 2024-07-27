@@ -11,6 +11,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
+import top.saltwood.everythingAtHome.modules.Config;
+import top.saltwood.everythingAtHome.modules.cluster.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -215,18 +217,18 @@ public class Utils {
         String sign = Utils.getSign("/measure/" + size, cluster);
         String url = "http://" + cluster.ip + ":" + cluster.port + "/measure/" + size + sign;
         double time = Utils.requestForTime(url, 1024L * 1024 * size);
-        return (size * 8 * 1000) / time;
+        return size * 8 / (time / 1000);
     }
     
     private static double requestForTime(String url, long size) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("User-Agent", SharedData.config.config.userAgent)
+                .addHeader("User-Agent", Config.userAgent)
                 .build();
         OkHttpClient client = new OkHttpClient();
         long start = System.currentTimeMillis();
         Response response = client.newCall(request).execute();
-        if (response.body().contentLength() != size) {
+        if (response.body() != null && response.body().contentLength() != size) {
             return -1;
         }
         return (System.currentTimeMillis() - start);
