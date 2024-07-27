@@ -1,6 +1,7 @@
 import com.corundumstudio.socketio.Configuration;
 import modules.Config;
 import modules.cluster.ClusterJwt;
+import modules.cluster.Logger;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -50,7 +51,7 @@ public class SocketIOServer {
                 }
             }
             client.sendEvent("message", "Welcome to Open93@Home (v" + Config.version + ")! You can find us at https://github.com/SaltWood-Studio/Open93AtHome.");
-            System.out.println("Client connected: " + client.getSessionId());
+            Logger.logger.log("Client connected: " + client.getSessionId());
         });
         
         // Event for receiving message from client
@@ -128,20 +129,20 @@ public class SocketIOServer {
             this.sharedData.centerServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
                     .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
-            System.out.println("Client disconnected: " + client.getSessionId());
+            Logger.logger.log("Client disconnected: " + client.getSessionId());
         });
     }
     
     public void start() {
         // Start the server
         ioServer.start();
-        System.out.println("EverythingAtHome server started.");
-        System.out.println("Socket.IO server started on port " + this.ioServer.getConfiguration().getPort());
+        Logger.logger.log("EverythingAtHome server started.");
+        Logger.logger.log("Socket.IO server started on port " + this.ioServer.getConfiguration().getPort());
     }
     
     public void stop() {
         // Stop the server
         ioServer.stop();
-        System.out.println("EverythingAtHome server stopped");
+        Logger.logger.log("EverythingAtHome server stopped");
     }
 }

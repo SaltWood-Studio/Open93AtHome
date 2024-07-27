@@ -1,24 +1,23 @@
-package modules.http;
+package modules;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import modules.cluster.Logger;
 
-public class HandlerWrapper implements HttpHandler {
+public abstract class HandlerWrapper implements HttpHandler {
     public void handle(HttpExchange exchange) {
         try {
             execute(exchange);
             exchange.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.logger.log("Error: " + e.getMessage());
         }
         String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
         remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
-        System.out.println(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
+        Logger.logger.log(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
                 + exchange.getResponseCode() + " [" + remoteAddress + "]");
         exchange.close();
     }
     
-    public void execute(HttpExchange exchange) throws Exception {
-        return;
-    }
+    public abstract void execute(HttpExchange exchange) throws Exception;
 }

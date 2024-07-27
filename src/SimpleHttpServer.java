@@ -5,7 +5,8 @@ import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import modules.cluster.ClusterJwt;
-import modules.http.HandlerWrapper;
+import modules.HandlerWrapper;
+import modules.cluster.Logger;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
@@ -89,7 +90,7 @@ public class SimpleHttpServer {
         
         httpsServer.setExecutor(null); // creates a default executor
         httpsServer.start();
-        System.out.println("HTTPS server started on port " + this.port);
+        Logger.logger.log("HTTPS server started on port " + this.port);
     }
     
     public void stop() {
@@ -102,7 +103,7 @@ public class SimpleHttpServer {
         
         server.setExecutor(null); // creates a default executor
         server.start();
-        System.out.println("HTTP server started on port " + this.port);
+        Logger.logger.log("HTTP server started on port " + this.port);
     }
     
     protected void verifyClusterRequest(HttpExchange exchange) throws Exception {

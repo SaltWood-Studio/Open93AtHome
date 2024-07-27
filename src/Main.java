@@ -1,11 +1,12 @@
 import modules.Config;
 import modules.cluster.ClusterJwt;
+import modules.cluster.Logger;
 
 public class Main {
     
     public static void main(String[] args) throws Exception {
-        System.out.println("Starting Open93@Home");
-        System.out.println("version: " + Config.version);
+        Logger.logger.log("Starting Open93@Home");
+        Logger.logger.log("version: " + Config.version);
         // 统一 key
         SimpleHttpServer.key = ClusterJwt.key;
         CenterServer centerServer = new CenterServer(); // 9300
