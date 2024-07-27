@@ -1,8 +1,8 @@
-package modules;
+package top.saltwood.everythingAtHome.modules.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.cluster.Logger;
 
 public abstract class HandlerWrapper implements HttpHandler {
     public void handle(HttpExchange exchange) {

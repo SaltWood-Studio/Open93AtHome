@@ -1,4 +1,4 @@
-package modules.cluster;
+package top.saltwood.everythingAtHome.modules.cluster;
 
 public class Logger {
     private Logger() {

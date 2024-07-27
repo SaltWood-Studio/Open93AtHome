@@ -1,4 +1,4 @@
-package modules.cluster;
+package top.saltwood.everythingAtHome.modules.cluster;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;

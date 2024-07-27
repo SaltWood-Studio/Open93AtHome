@@ -1,7 +1,12 @@
+package top.saltwood.everythingAtHome.modules.server;
+
 import com.corundumstudio.socketio.Configuration;
-import modules.Config;
-import modules.cluster.ClusterJwt;
-import modules.cluster.Logger;
+import top.saltwood.everythingAtHome.Cluster;
+import top.saltwood.everythingAtHome.SharedData;
+import top.saltwood.everythingAtHome.Utils;
+import top.saltwood.everythingAtHome.modules.Config;
+import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
+import top.saltwood.everythingAtHome.modules.cluster.Logger;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -144,5 +149,9 @@ public class SocketIOServer {
         // Stop the server
         ioServer.stop();
         Logger.logger.log("EverythingAtHome server stopped");
+    }
+    
+    public void disconnectAll() {
+        ioServer.getAllClients().forEach(client -> client.disconnect());
     }
 }

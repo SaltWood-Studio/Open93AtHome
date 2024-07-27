@@ -1,4 +1,4 @@
-package modules;
+package top.saltwood.everythingAtHome.modules;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 

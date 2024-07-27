@@ -1,21 +1,26 @@
+package top.saltwood.everythingAtHome;
+
 import com.alibaba.fastjson2.JSON;
-import modules.Config;
+import com.alibaba.fastjson2.JSONObject;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ConfigHelper {
+public class StorageHelper<T> {
+    private final Class<T> tClass;
     private final String name;
-    public Config config;
+    public List<T> elements = new ArrayList<>();
     
-    public ConfigHelper(String name) {
+    public StorageHelper(String name, Class<T> tClass) {
         this.name = name;
-        this.config = new Config();
+        this.tClass = tClass;
     }
     
     public void save() {
-        byte[] bytes = JSON.toJSONBytes(this.config);
+        byte[] bytes = JSON.toJSONBytes(this.elements);
         // 读取文件
         try (FileOutputStream fos = new FileOutputStream(name)) {
             fos.write(bytes);
@@ -32,6 +37,9 @@ public class ConfigHelper {
         } catch (IOException e) {
             return;
         }
-        config = JSON.parseObject(bytes, Config.class);
+        List<JSONObject> objects = JSON.parseObject(bytes, ArrayList.class);
+        for (JSONObject element : objects) {
+            this.elements.add(element.toJavaObject(this.tClass));
+        }
     }
 }

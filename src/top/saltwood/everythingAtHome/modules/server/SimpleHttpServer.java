@@ -1,12 +1,15 @@
+package top.saltwood.everythingAtHome.modules.server;
+
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
-import modules.cluster.ClusterJwt;
-import modules.HandlerWrapper;
-import modules.cluster.Logger;
+import top.saltwood.everythingAtHome.*;
+import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
+import top.saltwood.everythingAtHome.modules.http.HandlerWrapper;
+import top.saltwood.everythingAtHome.modules.cluster.Logger;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;

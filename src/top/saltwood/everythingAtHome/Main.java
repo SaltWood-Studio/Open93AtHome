@@ -1,6 +1,11 @@
-import modules.Config;
-import modules.cluster.ClusterJwt;
-import modules.cluster.Logger;
+package top.saltwood.everythingAtHome;
+
+import top.saltwood.everythingAtHome.modules.Config;
+import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
+import top.saltwood.everythingAtHome.modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.server.CenterServer;
+import top.saltwood.everythingAtHome.modules.server.SimpleHttpServer;
+import top.saltwood.everythingAtHome.modules.server.SocketIOServer;
 
 public class Main {
     
@@ -26,9 +31,7 @@ public class Main {
         
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            socketIOServer.ioServer.getAllClients().forEach(client -> {
-                client.disconnect();
-            });
+            socketIOServer.disconnectAll();
             sharedData.saveAll();
             httpServer.stop();
             socketIOServer.stop();

@@ -1,3 +1,5 @@
+package top.saltwood.everythingAtHome;
+
 import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
