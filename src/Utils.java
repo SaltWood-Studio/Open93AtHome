@@ -14,7 +14,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -196,7 +195,7 @@ public class Utils {
                 .build();
         OkHttpClient client = new OkHttpClient();
         Response response = client.newCall(request).execute();
-        if (file.hash.equals(FileObject.computeHash(response.body().byteStream()))){
+        if (file.hash.equals(FileObject.computeHash(response.body().byteStream()))) {
             isValid = true;
         }
         response.close();

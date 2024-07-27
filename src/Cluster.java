@@ -65,7 +65,8 @@ public class Cluster {
                         break;
                     }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         });
     }
     

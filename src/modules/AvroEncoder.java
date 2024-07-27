@@ -11,18 +11,6 @@ public class AvroEncoder {
         byteStream = new ByteArrayOutputStream();
     }
     
-    public void setElements(int count) throws IOException {
-        this.byteStream.write(longToByte(count));
-    }
-    
-    public void setLong(long value) throws IOException {
-        this.byteStream.write(longToByte(value));
-    }
-    
-    public void setString(String value) throws IOException {
-        this.byteStream.write(stringToByte(value));
-    }
-    
     public static byte[] longToByte(long value) throws IOException {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
         long data = (value << 1) ^ (value >> 63);
@@ -44,7 +32,19 @@ public class AvroEncoder {
         return o.toByteArray();
     }
     
-    public void setEnd(){
+    public void setElements(int count) throws IOException {
+        this.byteStream.write(longToByte(count));
+    }
+    
+    public void setLong(long value) throws IOException {
+        this.byteStream.write(longToByte(value));
+    }
+    
+    public void setString(String value) throws IOException {
+        this.byteStream.write(stringToByte(value));
+    }
+    
+    public void setEnd() {
         this.byteStream.write(0x00);
     }
 }

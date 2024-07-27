@@ -6,7 +6,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import modules.cluster.ClusterJwt;
 import modules.http.HandlerWrapper;
-import modules.http.Response;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
@@ -14,10 +13,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SimpleHttpServer {
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
@@ -25,6 +24,7 @@ public class SimpleHttpServer {
     private final int port;
     public SharedData sharedData;
     private HttpServer server;
+    private Thread fileUpdateThread;
     
     public SimpleHttpServer() {
         this(9388);
@@ -37,7 +37,6 @@ public class SimpleHttpServer {
     public void start() {
         start(false);
     }
-    private Thread fileUpdateThread;
     
     public void start(boolean forceHttp) {
         try {
@@ -131,72 +130,66 @@ public class SimpleHttpServer {
     private void createHttpContext() {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 if (sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
-                    return null;
+                    return;
                 }
                 String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
                 if (url == null) {
                     try {
                         FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString());
-                        OutputStream stream = httpExchange.getResponseBody();
-                        httpExchange.sendResponseHeaders(200, file.size);
-                        // 发送文件
-                        byte[] buffer = new byte[2048];
-                        int len;
-                        while ((len = fis.read(buffer)) > 0) {
-                            stream.write(buffer, 0, len);
+                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString())) {
+                            OutputStream stream = httpExchange.getResponseBody();
+                            httpExchange.sendResponseHeaders(200, file.size);
+                            // 发送文件
+                            byte[] buffer = new byte[2048];
+                            int len;
+                            while ((len = fis.read(buffer)) > 0) {
+                                stream.write(buffer, 0, len);
+                            }
                         }
-                        return null;
                     } catch (Exception ex) {
                         byte[] bytes = "Service unavailable.".getBytes();
                         httpExchange.sendResponseHeaders(503, bytes.length);
                         httpExchange.getResponseBody().write(bytes);
-                        return null;
                     }
                 } else {
                     httpExchange.getResponseHeaders().set("Location", url);
                     httpExchange.sendResponseHeaders(302, 0);
                 }
-                return null;
             }
         });
         this.server.createContext("/robots.txt", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.sendResponseHeaders(200, Utils.robotsTip.length);
                 httpExchange.getResponseBody().write(Utils.robotsTip);
-                return null;
             }
         });
         this.server.createContext("/openbmclapi-agent/challenge", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Map<String, String> map = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 String id = map.get("clusterId");
                 Cluster cluster = sharedData.centerServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
-                    return null;
+                    return;
                 }
                 JSONObject object = new JSONObject();
                 object.put("challenge", ClusterJwt.generateJwtToken("challenge",
                         1000 * 60 * 60L, key, ALGORITHM, id).compact());
-                Response resp = new Response();
-                resp.bytes = object.toJSONString().getBytes();
-                resp.responseCode = 200;
-                return resp;
+                httpExchange.getResponseBody().write(object.toJSONString().getBytes(StandardCharsets.UTF_8));
             }
         });
         this.server.createContext("/openbmclapi-agent/token", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws IOException {
+            public void execute(HttpExchange httpExchange) throws IOException {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Map<String, String> requestObject = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
                 String id = requestObject.get("clusterId");
@@ -205,18 +198,18 @@ public class SimpleHttpServer {
                 Cluster cluster = sharedData.centerServer.clusters.get(id);
                 if (cluster == null) {
                     httpExchange.sendResponseHeaders(404, 0);
-                    return null;
+                    return;
                 }
                 
                 String idInJwt = Utils.decodeJwt(challenge, key, "cluster_id");
                 if (idInJwt == null || !idInJwt.equals(id)) {
                     httpExchange.sendResponseHeaders(401, 0);
-                    return null;
+                    return;
                 }
                 String realSign = Utils.generateSignature(cluster.secret, challenge);
                 if (realSign == null || !realSign.equals(sign)) {
                     httpExchange.sendResponseHeaders(401, 0);
-                    return null;
+                    return;
                 }
                 
                 JSONObject object = new JSONObject();
@@ -228,12 +221,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(bytes);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/openbmclapi/configuration", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 verifyClusterRequest(httpExchange);
                 JSONObject sync = new JSONObject();
@@ -241,15 +233,12 @@ public class SimpleHttpServer {
                 sync.put("concurrency", 10);
                 JSONObject object = new JSONObject();
                 object.put("sync", sync);
-                Response resp = new Response();
-                resp.bytes = object.toJSONString().getBytes();
-                resp.responseCode = 200;
-                return resp;
+                httpExchange.getResponseBody().write(object.toJSONString().getBytes());
             }
         });
         this.server.createContext("/openbmclapi/download", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 verifyClusterRequest(httpExchange);
                 String hash = null;
                 if (httpExchange.getRequestURI().getPath().startsWith("/openbmclapi/download/")) {
@@ -257,39 +246,39 @@ public class SimpleHttpServer {
                 }
                 if (hash == null) {
                     httpExchange.sendResponseHeaders(404, 0);
-                    return null;
+                    return;
                 }
                 FileObject file = sharedData.centerServer.hashToFile.get(hash);
                 if (file == null) {
                     httpExchange.sendResponseHeaders(404, 0);
-                    return null;
+                    return;
                 }
                 httpExchange.sendResponseHeaders(200, file.size);
                 OutputStream stream = httpExchange.getResponseBody();
-                FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString());
-                // 发送文件
-                byte[] buffer = new byte[2048];
-                int len;
-                while ((len = fis.read(buffer)) > 0) {
-                    stream.write(buffer, 0, len);
+                try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString())) {
+                    // 发送文件
+                    byte[] buffer = new byte[2048];
+                    int len;
+                    while ((len = fis.read(buffer)) > 0) {
+                        stream.write(buffer, 0, len);
+                    }
                 }
-                return null;
             }
         });
         this.server.createContext("/openbmclapi/files", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 verifyClusterRequest(httpExchange);
                 Map<String, String> query = Utils.parseBodyToDictionary(httpExchange.getRequestURI().getQuery());
                 byte[] bytes;
-                if (query.containsKey("lastModified")){
+                if (query.containsKey("lastModified")) {
                     double lastModified = Double.parseDouble(query.get("lastModified"));
                     List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
                     if (objects.isEmpty()) {
                         httpExchange.sendResponseHeaders(204, -1);
-                        return null;
+                        return;
                     }
                     bytes = CenterServer.computeAvroBytes(objects);
                 } else {
@@ -299,12 +288,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(bytes);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/new_cluster", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -327,12 +315,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/add_cluster", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -355,12 +342,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/list_cluster", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
                 String response = JSONObject.toJSONString(sharedData.clusterStorageHelper.elements);
@@ -369,12 +355,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/list_online_cluster", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
                 String response = JSONObject.toJSONString(sharedData.centerServer.getOnlineClusters().toList());
@@ -383,15 +368,14 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/rank", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 JSONArray array = new JSONArray();
-                List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).collect(Collectors.toList());
+                List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).toList();
                 for (Cluster cluster : clusters) {
                     JSONObject object = new JSONObject();
                     object.put("id", cluster.id);
@@ -404,17 +388,16 @@ public class SimpleHttpServer {
                     array.add(object);
                 }
                 String response = array.toJSONString();
-                byte[] message = response.getBytes("utf-8");
+                byte[] message = response.getBytes(StandardCharsets.UTF_8);
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/remove_cluster", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestRemoveCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -429,23 +412,21 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/random_file", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 FileObject file = sharedData.fileStorageHelper.elements.get(new Random().nextInt(sharedData.fileStorageHelper.elements.size()));
                 byte[] bytes = JSON.toJSONBytes(file);
                 httpExchange.sendResponseHeaders(200, bytes.length);
                 httpExchange.getResponseBody().write(bytes);
-                return null;
             }
         });
         this.server.createContext("/93AtHome/add_file", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddFile");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -455,8 +436,6 @@ public class SimpleHttpServer {
                 Path filePath = Path.of(SharedData.config.config.filePath, path);
                 try (FileInputStream fis = new FileInputStream(filePath.toString())) {
                     hash = FileObject.computeHash(fis);
-                } catch (Exception e) {
-                    throw e;
                 }
                 long size = filePath.toFile().length();
                 long lastModified = filePath.toFile().lastModified();
@@ -473,12 +452,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/remove_file", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestRemoveFile");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
@@ -495,12 +473,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/list_file", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListFile");
                 String response = JSON.toJSONString(sharedData.fileStorageHelper.elements);
@@ -510,12 +487,11 @@ public class SimpleHttpServer {
                 OutputStream os = httpExchange.getResponseBody();
                 os.write(message);
                 os.close();
-                return null;
             }
         });
         this.server.createContext("/93AtHome/update_files", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestUpdateFiles");
                 if (fileUpdateThread != null && fileUpdateThread.isAlive()) {
                     byte[] bytes = """
@@ -555,7 +531,7 @@ public class SimpleHttpServer {
                     
                     os.write(bytes);
                     os.close();
-                    return null;
+                    return;
                 }
                 fileUpdateThread = new Thread(() -> {
                     ProcessBuilder processBuilder = new ProcessBuilder();
@@ -583,12 +559,12 @@ public class SimpleHttpServer {
                     sharedData.saveAll();
                     List<FileObject> newFiles = new ArrayList<>();
                     for (FileObject file : sharedData.fileStorageHelper.elements) {
-                        if (!oldFiles.stream().anyMatch(f -> f.hash.equals(file.hash))) {
+                        if (oldFiles.stream().noneMatch(f -> f.hash.equals(file.hash))) {
                             newFiles.add(file);
                         }
                     }
                     sharedData.centerServer.getOnlineClusters().forEach(cluster -> {
-                        for (FileObject object: newFiles) {
+                        for (FileObject object : newFiles) {
                             try {
                                 boolean isValid = cluster.doWardenOnce(object);
                                 if (!isValid) {
@@ -604,26 +580,24 @@ public class SimpleHttpServer {
                 });
                 fileUpdateThread.start();
                 httpExchange.sendResponseHeaders(204, -1);
-                return null;
             }
         });
         this.server.createContext("/93AtHome/save_all", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestSaveAll");
                 sharedData.saveAll();
                 byte[] result = "Saved.".getBytes();
                 httpExchange.sendResponseHeaders(200, result.length);
                 httpExchange.getResponseBody().write(result);
-                return null;
             }
         });
         this.server.createContext("/93AtHome/new_token", new HandlerWrapper() {
             @Override
-            public Response execute(HttpExchange httpExchange) throws Exception {
+            public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionAll");
-                        Token token = new Token();
+                Token token = new Token();
                 Map<String, Boolean> body = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
                 for (Map.Entry<String, Boolean> entry : body.entrySet()) {
                     token.setPermission(entry.getKey(), entry.getValue());
@@ -636,7 +610,6 @@ public class SimpleHttpServer {
                 byte[] bytes = object.toString().getBytes();
                 httpExchange.sendResponseHeaders(200, bytes.length);
                 httpExchange.getResponseBody().write(bytes);
-                return null;
             }
         });
     }

@@ -22,6 +22,23 @@ public class CenterServer {
         this.clusters = new ConcurrentHashMap<>();
     }
     
+    public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
+        AvroEncoder encoder = new AvroEncoder();
+        synchronized (elements) {
+            encoder.setElements(elements.size());
+            for (FileObject file : elements) {
+                encoder.setString(file.path);
+                encoder.setString(file.hash);
+                encoder.setLong(file.size);
+                encoder.setLong(file.lastModified);
+            }
+            encoder.setEnd();
+        }
+        byte[] bytes = encoder.byteStream.toByteArray();
+        encoder.byteStream.close();
+        return Zstd.compress(bytes);
+    }
+    
     public List<FileObject> getFiles() {
         return this.sharedData.fileStorageHelper.elements;
     }
@@ -54,23 +71,6 @@ public class CenterServer {
     
     public void refreshAvroBytes() throws IOException {
         this.avroBytes = computeAvroBytes(this.sharedData.fileStorageHelper.elements);
-    }
-    
-    public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
-        AvroEncoder encoder = new AvroEncoder();
-        synchronized (elements) {
-            encoder.setElements(elements.size());
-            for (FileObject file : elements) {
-                encoder.setString(file.path);
-                encoder.setString(file.hash);
-                encoder.setLong(file.size);
-                encoder.setLong(file.lastModified);
-            }
-            encoder.setEnd();
-        }
-        byte[] bytes = encoder.byteStream.toByteArray();
-        encoder.byteStream.close();
-        return Zstd.compress(bytes);
     }
     
     public String requestDownload(String path) {
@@ -117,7 +117,7 @@ public class CenterServer {
             try {
                 Thread.sleep(3000);
                 isValid = Utils.checkCluster(url, file);
-                if (!isValid){
+                if (!isValid) {
                     break;
                 }
             } catch (Exception ex) {
