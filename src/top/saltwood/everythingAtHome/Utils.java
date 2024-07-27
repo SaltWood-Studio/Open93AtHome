@@ -1,5 +1,6 @@
 package top.saltwood.everythingAtHome;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -9,6 +10,7 @@ import io.jsonwebtoken.impl.DefaultClaims;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -26,6 +28,7 @@ import java.security.SecureRandom;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Utils {
     public static final byte[] forbiddenTip = "403 Forbidden.".getBytes();
@@ -97,6 +100,10 @@ public class Utils {
     }
     
     public static String getSign(FileObject file, Cluster cluster) {
+        return getSign(file.hash, cluster);
+    }
+    
+    public static String getSign(String path, Cluster cluster) {
         MessageDigest sha1;
         try {
             sha1 = MessageDigest.getInstance("SHA-1");
@@ -106,7 +113,7 @@ public class Utils {
         }
         long timestamp = System.currentTimeMillis() + 5 * 60 * 1000;
         String e = Long.toString(timestamp, 36);
-        byte[] signBytes = sha1.digest((cluster.secret + file.hash + e).getBytes());
+        byte[] signBytes = sha1.digest((cluster.secret + path + e).getBytes());
         String sign = toUrlSafeBase64String(signBytes);
         return "?s=" + sign + "&e=" + e;
     }
@@ -204,6 +211,27 @@ public class Utils {
         return isValid;
     }
     
+    public static double measureCluster(Cluster cluster, int size) throws IOException {
+        String sign = Utils.getSign("/measure/" + size, cluster);
+        String url = "http://" + cluster.ip + ":" + cluster.port + "/measure/" + size + "?sign=" + sign;
+        double time = Utils.requestForTime(url, 1024L * 1024 * size);
+        return (size * 8 * 1000) / time;
+    }
+    
+    private static double requestForTime(String url, long size) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", SharedData.config.config.userAgent)
+                .build();
+        OkHttpClient client = new OkHttpClient();
+        long start = System.currentTimeMillis();
+        Response response = client.newCall(request).execute();
+        if (response.body().contentLength() != size) {
+            return -1;
+        }
+        return (System.currentTimeMillis() - start);
+    }
+    
     public static <T> T random(List<T> list) {
         if (list.isEmpty()) {
             return null;
@@ -225,6 +253,33 @@ public class Utils {
             httpExchange.close();
             throw new Exception("Forbidden");
         }
+    }
+    
+    public static JSONObject getJsonObject(Cluster cluster) {
+        JSONObject object = new JSONObject();
+        object.put("id", cluster.id);
+        object.put("name", cluster.name);
+        object.put("bandwidth", cluster.bandwidth);
+        object.put("measureBandwidth", cluster.measureBandwidth);
+        object.put("bytes", cluster.traffics);
+        object.put("pendingBytes", cluster.pendingTraffics);
+        object.put("hits", cluster.hits);
+        object.put("pendingHits", cluster.pendingHits);
+        return object;
+    }
+    
+    public static JSONArray getClustersJsonArray(Collection<Cluster> clusters) {
+        JSONArray array = new JSONArray();
+        for (Cluster cluster : clusters) {
+            array.add(getJsonObject(cluster));
+        }
+        return array;
+    }
+    
+    public static JSONArray getClustersJsonArray(Stream<Cluster> clusters) {
+        JSONArray array = new JSONArray();
+        clusters.forEach(cluster -> array.add(getJsonObject(cluster)));
+        return array;
     }
 }
 

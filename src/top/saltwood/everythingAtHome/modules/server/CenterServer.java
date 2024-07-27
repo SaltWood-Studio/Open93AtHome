@@ -120,6 +120,14 @@ public class CenterServer {
         if (cluster == null) throw new Exception("cluster not found");
         boolean isValid = true;
         Exception exception = null;
+        
+        // 测速
+        double bandwidth = Utils.measureCluster(cluster, 20);
+        if (bandwidth < 10) {
+            throw new Exception("测速失败: 带宽小于 10Mbps，实际测量值为 " + String.format("%.2f", bandwidth) + "Mbps");
+        }
+        cluster.measureBandwidth = bandwidth;
+        
         for (int i = 0; i < 8; i++) {
             FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
             String sign = Utils.getSign(file, cluster);

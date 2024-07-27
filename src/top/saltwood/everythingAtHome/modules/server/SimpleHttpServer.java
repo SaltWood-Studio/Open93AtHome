@@ -6,6 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import org.jetbrains.annotations.NotNull;
 import top.saltwood.everythingAtHome.*;
 import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
 import top.saltwood.everythingAtHome.modules.http.HandlerWrapper;
@@ -361,7 +362,7 @@ public class SimpleHttpServer {
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
-                String response = JSONObject.toJSONString(sharedData.clusterStorageHelper.elements);
+                String response = Utils.getClustersJsonArray(sharedData.centerServer.clusters.values()).toJSONString();
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
@@ -374,7 +375,7 @@ public class SimpleHttpServer {
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
-                String response = JSONObject.toJSONString(sharedData.centerServer.getOnlineClusters().toList());
+                String response = Utils.getClustersJsonArray(sharedData.centerServer.getOnlineClusters()).toJSONString();
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
                 OutputStream os = httpExchange.getResponseBody();
@@ -389,14 +390,7 @@ public class SimpleHttpServer {
                 JSONArray array = new JSONArray();
                 List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).toList();
                 for (Cluster cluster : clusters) {
-                    JSONObject object = new JSONObject();
-                    object.put("id", cluster.id);
-                    object.put("name", cluster.name);
-                    object.put("bandwidth", cluster.bandwidth);
-                    object.put("bytes", cluster.traffics);
-                    object.put("pendingBytes", cluster.pendingTraffics);
-                    object.put("hits", cluster.hits);
-                    object.put("pendingHits", cluster.pendingHits);
+                    JSONObject object = Utils.getJsonObject(cluster);
                     array.add(object);
                 }
                 String response = array.toJSONString();
