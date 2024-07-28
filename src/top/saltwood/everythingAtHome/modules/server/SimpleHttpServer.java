@@ -290,7 +290,7 @@ public class SimpleHttpServer {
                     List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
-                    if (objects.isEmpty()) {
+                    if (objects.isEmpty() || lastModified == 0/* 无效的 lastModified，What can I say? */) {
                         httpExchange.sendResponseHeaders(204, -1);
                         return;
                     }
