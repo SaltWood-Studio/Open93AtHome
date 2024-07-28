@@ -270,10 +270,12 @@ public class Utils {
         object.put("name", cluster.name);
         object.put("bandwidth", cluster.bandwidth);
         object.put("measureBandwidth", cluster.measureBandwidth);
-        object.put("bytes", cluster.traffics);
-        object.put("pendingBytes", cluster.pendingTraffics);
         object.put("hits", cluster.hits);
+        object.put("bytes", cluster.traffics);
         object.put("pendingHits", cluster.pendingHits);
+        object.put("pendingBytes", cluster.pendingTraffics);
+        object.put("isOnline", cluster.isOnline);
+        object.put("isBanned", cluster.isBanned);
         return object;
     }
     
