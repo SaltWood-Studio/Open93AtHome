@@ -21,7 +21,7 @@ public class Cluster {
     @JSONField(serialize = false)
     public boolean isOnline = false;
     @JSONField(serialize = false)
-    public double measureBandwidth;
+    public int measureBandwidth;
     @JSONField(serialize = false)
     private Thread wardenThread;
     public boolean isBanned;

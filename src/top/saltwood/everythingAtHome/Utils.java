@@ -31,6 +31,7 @@ import java.security.SecureRandom;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 public class Utils {
@@ -288,6 +289,29 @@ public class Utils {
         JSONArray array = new JSONArray();
         clusters.forEach(cluster -> array.add(getJsonObject(cluster)));
         return array;
+    }
+    
+    public static <T> T weightedRandom(Stream<T> items, ToIntFunction<T> weightFunction) {
+        int[] weights = items.mapToInt(weightFunction).toArray();
+        int totalWeight = 0;
+        for (int weight : weights) {
+            totalWeight += weight;
+        }
+        
+        int randomValue = new Random().nextInt(totalWeight);
+        
+        int currentWeightSum = 0;
+        for (int i = 0; i < weights.length; i++) {
+            currentWeightSum += weights[i];
+            if (randomValue < currentWeightSum) {
+                return items.skip(i).findFirst().orElse(null);
+            }
+        }
+        return null;
+    }
+    
+    public static <T> T weightedRandom(Collection<T> items, ToIntFunction<T> weightFunction) {
+        return weightedRandom(items.stream(), weightFunction);
     }
 }
 

@@ -143,7 +143,8 @@ public class SimpleHttpServer {
                     return;
                 }
                 String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
-                if (url == null) {
+                if (Math.random() < (1.0 / (sharedData.centerServer.getOnlineClusters().count() + 1)) // 随机到主控
+                        || url == null) {
                     try {
                         FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件

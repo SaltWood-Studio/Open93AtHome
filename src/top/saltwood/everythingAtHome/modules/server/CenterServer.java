@@ -108,11 +108,7 @@ public class CenterServer {
     
     public Cluster chooseOneCluster() {
         // 从 this.onlineClusters 中随机选择一个并返回
-        synchronized (this.getOnlineClusters()) {
-            if (this.getOnlineClusters().count() == 0) return null;
-            List<Cluster> clusters = this.getOnlineClusters().toList();
-            return clusters.get(new Random().nextInt(clusters.size()));
-        }
+        return Utils.weightedRandom(this.getOnlineClusters(), cluster -> cluster.measureBandwidth);
     }
     
     public void tryEnable(String id) throws Exception {
@@ -126,7 +122,7 @@ public class CenterServer {
         if (bandwidth < 10) {
             throw new Exception("测速失败: 带宽小于 10Mbps，实际测量值为 " + String.format("%.2f", bandwidth) + "Mbps");
         }
-        cluster.measureBandwidth = bandwidth;
+        cluster.measureBandwidth = (int) bandwidth;
         
         for (int i = 0; i < 8; i++) {
             FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
