@@ -231,7 +231,7 @@ public class Utils {
         Response response = client.newCall(request).execute();
         if (response.body() != null && response.body().contentLength() != size) {
             response.close();
-            throw new Exception("Body length less than " + size * 1024 * 1024);
+            throw new Exception("Content-Length less than " + size * 1024 * 1024);
         }
         InputStream is = null;
         if (response.body() != null) {
