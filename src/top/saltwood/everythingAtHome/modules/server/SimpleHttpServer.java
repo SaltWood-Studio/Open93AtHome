@@ -290,7 +290,7 @@ public class SimpleHttpServer {
                     List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
-                    if (objects.isEmpty() || lastModified == 0/* 无效的 lastModified，What can I say? */) {
+                    if (objects.isEmpty() /*|| lastModified == 0 Python 你怎么回事啊，怎么启动请求lastModified=0.0啊，What can I say? */) {
                         httpExchange.sendResponseHeaders(204, -1);
                         return;
                     }
