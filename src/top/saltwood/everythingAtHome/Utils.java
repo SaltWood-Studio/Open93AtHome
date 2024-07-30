@@ -231,13 +231,13 @@ public class Utils {
         Response response = client.newCall(request).execute();
         if (response.body() != null && response.body().contentLength() != size) {
             response.close();
-            throw new Exception("Content-Length less than " + size * 1024 * 1024);
+            throw new Exception("Content-Length less than " + size);
         }
         InputStream is = null;
         if (response.body() != null) {
             is = response.body().byteStream();
-            long skippedBytes = is.skip(size * 1024 * 1024);
-            if (skippedBytes < size * 1024 * 1024) throw new Exception("Body length less than " + size * 1024 * 1024 + ", got " + skippedBytes);
+            long skippedBytes = is.skip(size);
+            if (skippedBytes < size) throw new Exception("Body length less than " + size + ", got " + skippedBytes);
             is.close();
         }
         response.close();
