@@ -8,6 +8,7 @@ public abstract class HandlerWrapper implements HttpHandler {
     public void handle(HttpExchange exchange) {
         try {
             execute(exchange);
+            exchange.getResponseBody().flush();
             exchange.close();
         } catch (Exception e) {
             Logger.logger.logLine("Error: " + e);

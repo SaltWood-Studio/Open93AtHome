@@ -153,9 +153,11 @@ public class SimpleHttpServer {
                             // 发送文件
                             byte[] buffer = new byte[2048];
                             int len;
-                            while ((len = fis.read(buffer)) > 0) {
+                            int sum = 0;
+                            while ((sum += (len = fis.read(buffer))) > 0 && sum <= file.size) {
                                 stream.write(buffer, 0, len);
                             }
+                            stream.flush();
                         }
                     } catch (Exception ex) {
                         byte[] bytes = "Service unavailable.".getBytes();
