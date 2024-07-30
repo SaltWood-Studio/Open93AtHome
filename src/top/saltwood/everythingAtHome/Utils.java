@@ -302,7 +302,8 @@ public class Utils {
         for (int weight : weights) {
             totalWeight += weight;
         }
-        
+
+        if (totalWeight == 0) return null;
         int randomValue = new Random().nextInt(totalWeight);
         
         int currentWeightSum = 0;
