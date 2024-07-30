@@ -153,7 +153,7 @@ public class CenterServer {
             File file = Path.of(SharedData.config.config.filePath, fileObject.path).toFile();
             // 检查文件是否存在
             if (!file.exists()){
-                Logger.logger.log("File not found: " + fileObject.path);
+                Logger.logger.logLine("File not found: " + fileObject.path);
                 // 从文件存储中删除
                 invalidFiles.add(fileObject);
             }

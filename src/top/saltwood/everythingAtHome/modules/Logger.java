@@ -23,6 +23,10 @@ public class Logger extends PrintStream {
             System.out.println(message);
         }
     }
+    @Override
+    public void println() {
+        this.logLine();
+    }
 
     public void logLine() {
         this.logLine("");
@@ -73,10 +77,6 @@ public class Logger extends PrintStream {
         this.log(obj);
     }
 
-    @Override
-    public void println() {
-        this.logLine();
-    }
 
     @Override
     public void println(boolean x) {

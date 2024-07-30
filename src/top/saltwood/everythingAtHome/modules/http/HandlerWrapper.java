@@ -10,12 +10,12 @@ public abstract class HandlerWrapper implements HttpHandler {
             execute(exchange);
             exchange.close();
         } catch (Exception e) {
-            Logger.logger.log("Error: " + e);
+            Logger.logger.logLine("Error: " + e);
             e.printStackTrace(Logger.logger);
         }
         String remoteAddress = exchange.getRequestHeaders().getFirst("X-Real-IP");
         remoteAddress = remoteAddress == null || remoteAddress.isEmpty() ? exchange.getRemoteAddress().toString() : remoteAddress;
-        Logger.logger.log(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
+        Logger.logger.logLine(exchange.getRequestMethod() + " " + exchange.getRequestURI() + " " + exchange.getProtocol() + " - "
                 + exchange.getResponseCode() + " [" + remoteAddress + "]");
         exchange.close();
     }

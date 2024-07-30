@@ -57,7 +57,7 @@ public class SocketIOServer {
                 }
             }
             client.sendEvent("message", "Welcome to Open93@Home (v" + Config.version + ")! You can find us at https://github.com/SaltWood-Studio/Open93AtHome.");
-            Logger.logger.log("Client connected: " + client.getSessionId());
+            Logger.logger.logLine("Client connected: " + client.getSessionId());
         });
         
         // Event for receiving message from client
@@ -135,21 +135,21 @@ public class SocketIOServer {
             this.sharedData.centerServer.clusters.values().stream().filter(cluster -> cluster.id.equals(id))
                     .forEach(cluster -> cluster.isOnline = false);
             this.sessions.remove(client.getSessionId().toString());
-            Logger.logger.log("Client disconnected: " + client.getSessionId());
+            Logger.logger.logLine("Client disconnected: " + client.getSessionId());
         });
     }
     
     public void start() {
         // Start the server
         ioServer.start();
-        Logger.logger.log("EverythingAtHome server started.");
-        Logger.logger.log("Socket.IO server started on port " + this.ioServer.getConfiguration().getPort());
+        Logger.logger.logLine("EverythingAtHome server started.");
+        Logger.logger.logLine("Socket.IO server started on port " + this.ioServer.getConfiguration().getPort());
     }
     
     public void stop() {
         // Stop the server
         ioServer.stop();
-        Logger.logger.log("EverythingAtHome server stopped");
+        Logger.logger.logLine("EverythingAtHome server stopped");
     }
     
     public void disconnectAll() {

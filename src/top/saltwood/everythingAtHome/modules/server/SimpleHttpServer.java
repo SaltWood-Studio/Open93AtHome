@@ -37,7 +37,7 @@ public class SimpleHttpServer {
     public SimpleHttpServer(int port) {
         this.port = port;
     }
-    
+
     public void start() {
         start(false);
     }
@@ -93,7 +93,7 @@ public class SimpleHttpServer {
         
         httpsServer.setExecutor(null); // creates a default executor
         httpsServer.start();
-        Logger.logger.log("HTTPS server started on port " + this.port);
+        Logger.logger.logLine("HTTPS server started on port " + this.port);
     }
     
     public void stop() {
@@ -106,7 +106,7 @@ public class SimpleHttpServer {
         
         server.setExecutor(null); // creates a default executor
         server.start();
-        Logger.logger.log("HTTP server started on port " + this.port);
+        Logger.logger.logLine("HTTP server started on port " + this.port);
     }
     
     protected void verifyClusterRequest(HttpExchange exchange) throws Exception {
