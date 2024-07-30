@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class AvroEncoder {
-    public ByteArrayOutputStream byteStream;
+    public final ByteArrayOutputStream byteStream;
     
     public AvroEncoder() {
         byteStream = new ByteArrayOutputStream();

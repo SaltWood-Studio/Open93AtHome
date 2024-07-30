@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import java.lang.reflect.Field;
 
+@SuppressWarnings("unused")
 public class Token {
     public String value;
     public boolean permissionRequestUpdateFiles = false;
@@ -27,7 +28,7 @@ public class Token {
         if (token == null || !token.equals(this.value)) {
             return false;
         }
-        boolean isOn = false;
+        boolean isOn;
         try {
             Field field = this.getClass().getField(permission);
             isOn = (boolean) field.get(this);

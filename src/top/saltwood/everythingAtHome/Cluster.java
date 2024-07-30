@@ -44,8 +44,7 @@ public class Cluster {
     
     @Override
     public boolean equals(Object obj) {
-        Cluster cluster = (Cluster) obj;
-        if (cluster == null) return false;
+        if (!(obj instanceof Cluster cluster)) return false;
         return this.id.equals(cluster.id);
     }
     
@@ -72,8 +71,7 @@ public class Cluster {
                         break;
                     }
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) { }
         });
     }
     

@@ -10,9 +10,8 @@ import io.jsonwebtoken.impl.DefaultClaims;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 import top.saltwood.everythingAtHome.modules.Config;
-import top.saltwood.everythingAtHome.modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -60,7 +59,7 @@ public class Utils {
             byte[] hash = sha256Hmac.doFinal(challenge.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash).toLowerCase();
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
+            e.printStackTrace(Logger.logger);
             return null;
         }
     }
@@ -89,7 +88,7 @@ public class Utils {
     
     public static String decodeJwt(String jwt, SecretKey key, String header) {
         try {
-            Jwt j = Jwts.parser()
+            Jwt<?, ?> j = Jwts.parser()
                     .verifyWith(key)
                     .build()
                     .parse(jwt);
@@ -112,7 +111,7 @@ public class Utils {
         try {
             sha1 = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException e1) {
-            e1.printStackTrace();
+            e1.printStackTrace(Logger.logger);
             return null;
         }
         long timestamp = System.currentTimeMillis() + 5 * 60 * 1000;
@@ -204,7 +203,7 @@ public class Utils {
         boolean isValid = false;
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("User-Agent", SharedData.config.config.userAgent)
+                .addHeader("User-Agent", Config.userAgent)
                 .build();
         OkHttpClient client = new OkHttpClient();
         Response response = client.newCall(request).execute();
@@ -234,9 +233,13 @@ public class Utils {
             response.close();
             return -1;
         }
-        InputStream is = response.body().byteStream();
-        is.skip(size * 1024 * 1024);
-        is.close();
+        InputStream is = null;
+        if (response.body() != null) {
+            is = response.body().byteStream();
+            long skippedBytes = is.skip(size * 1024 * 1024);
+            if (skippedBytes < size * 1024 * 1024) return -1;
+            is.close();
+        }
         response.close();
         return (System.currentTimeMillis() - start);
     }

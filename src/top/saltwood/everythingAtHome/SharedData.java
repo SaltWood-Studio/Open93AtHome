@@ -9,9 +9,9 @@ import java.io.IOException;
 
 public class SharedData {
     public static ConfigHelper config;
-    public CenterServer centerServer;
-    public SimpleHttpServer httpServer;
-    public SocketIOServer socketIOServer;
+    public final CenterServer centerServer;
+    public final SimpleHttpServer httpServer;
+    public final SocketIOServer socketIOServer;
     // public TaskExecutor executor;
     public StorageHelper<Cluster> clusterStorageHelper;
     public StorageHelper<FileObject> fileStorageHelper;
@@ -42,7 +42,6 @@ public class SharedData {
         config.save();
         try {
             centerServer.update();
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) { }
     }
 }

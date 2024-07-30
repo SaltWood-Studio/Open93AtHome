@@ -6,11 +6,10 @@ import com.alibaba.fastjson2.JSONObject;
 import com.sun.net.httpserver.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
-import org.jetbrains.annotations.NotNull;
 import top.saltwood.everythingAtHome.*;
 import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
 import top.saltwood.everythingAtHome.modules.http.HandlerWrapper;
-import top.saltwood.everythingAtHome.modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.Logger;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
@@ -549,7 +548,7 @@ public class SimpleHttpServer {
                         Process process = processBuilder.start();
                         process.waitFor();
                     } catch (IOException | InterruptedException e) {
-                        e.printStackTrace();
+                        e.printStackTrace(Logger.logger);
                     }
                     Set<String> set = Utils.scanFiles(Path.of(SharedData.config.config.filePath).toFile().getAbsolutePath());
                     List<FileObject> oldFiles = sharedData.fileStorageHelper.elements;

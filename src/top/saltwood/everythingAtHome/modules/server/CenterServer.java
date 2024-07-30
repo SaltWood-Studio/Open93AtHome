@@ -6,7 +6,7 @@ import top.saltwood.everythingAtHome.FileObject;
 import top.saltwood.everythingAtHome.SharedData;
 import top.saltwood.everythingAtHome.Utils;
 import top.saltwood.everythingAtHome.modules.AvroEncoder;
-import top.saltwood.everythingAtHome.modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -34,16 +33,14 @@ public class CenterServer {
     
     public static byte[] computeAvroBytes(Collection<FileObject> elements) throws IOException {
         AvroEncoder encoder = new AvroEncoder();
-        synchronized (elements) {
-            encoder.setElements(elements.size());
-            for (FileObject file : elements) {
-                encoder.setString(file.path);
-                encoder.setString(file.hash);
-                encoder.setLong(file.size);
-                encoder.setLong(file.lastModified);
-            }
-            encoder.setEnd();
+        encoder.setElements(elements.size());
+        for (FileObject file : elements) {
+            encoder.setString(file.path);
+            encoder.setString(file.hash);
+            encoder.setLong(file.size);
+            encoder.setLong(file.lastModified);
         }
+        encoder.setEnd();
         byte[] bytes = encoder.byteStream.toByteArray();
         encoder.byteStream.close();
         return Zstd.compress(bytes);
@@ -51,11 +48,6 @@ public class CenterServer {
     
     public List<FileObject> getFiles() {
         return this.sharedData.fileStorageHelper.elements;
-    }
-    
-    public void setFiles(List<FileObject> files) throws IOException {
-        this.sharedData.fileStorageHelper.elements = files;
-        update();
     }
     
     public void update() throws IOException {
@@ -74,9 +66,7 @@ public class CenterServer {
     }
     
     public byte[] getAvroBytes() {
-        synchronized (this.avroBytes) {
-            return this.avroBytes;
-        }
+        return this.avroBytes;
     }
     
     public void refreshAvroBytes() throws IOException {
@@ -126,8 +116,12 @@ public class CenterServer {
         
         for (int i = 0; i < 8; i++) {
             FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
-            String sign = Utils.getSign(file, cluster);
-            String url = Utils.getUrl(file, cluster, sign);
+            String sign;
+            String url = null;
+            if (file != null) {
+                sign = Utils.getSign(file, cluster);
+                url = Utils.getUrl(file, cluster, sign);
+            }
             try {
                 Thread.sleep(3000);
                 isValid = Utils.checkCluster(url, file);
@@ -143,7 +137,9 @@ public class CenterServer {
         if (isValid) {
             cluster.isOnline = true;
         } else {
-            throw new Exception("Unable to download files from the cluster: " + exception.getMessage());
+            if (exception != null) {
+                throw new Exception("Unable to download files from the cluster: " + exception.getMessage());
+            }
         }
     }
     

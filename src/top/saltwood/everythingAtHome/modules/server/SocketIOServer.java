@@ -1,12 +1,13 @@
 package top.saltwood.everythingAtHome.modules.server;
 
+import com.corundumstudio.socketio.ClientOperations;
 import com.corundumstudio.socketio.Configuration;
 import top.saltwood.everythingAtHome.Cluster;
 import top.saltwood.everythingAtHome.SharedData;
 import top.saltwood.everythingAtHome.Utils;
 import top.saltwood.everythingAtHome.modules.Config;
 import top.saltwood.everythingAtHome.modules.cluster.ClusterJwt;
-import top.saltwood.everythingAtHome.modules.cluster.Logger;
+import top.saltwood.everythingAtHome.modules.Logger;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SocketIOServer {
     private final ConcurrentHashMap<String, String> sessions;
     public SharedData sharedData;
-    protected com.corundumstudio.socketio.SocketIOServer ioServer;
+    protected final com.corundumstudio.socketio.SocketIOServer ioServer;
     
     public SocketIOServer() {
         this(9300);
@@ -72,7 +73,7 @@ public class SocketIOServer {
             boolean enabled = false;
             Exception exception = null;
             try {
-                if (sharedData.centerServer.getFiles().size() > 0) {
+                if (!sharedData.centerServer.getFiles().isEmpty()) {
                     sharedData.centerServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
                     cluster.startWarden(sharedData.fileStorageHelper.elements);
                 }
@@ -87,7 +88,7 @@ public class SocketIOServer {
                     }
                     ackRequest.sendAckData((Object) new Object[]{null, true});
                 } else {
-                    final String message = exception != null ? exception.getMessage() : "Failed to enable";
+                    final String message = exception.getMessage();
                     ackRequest.sendAckData((Object) new Object[]{new HashMap<String, String>() {
                         {
                             put("message", "Failed to enable, error: " + message);
@@ -152,6 +153,6 @@ public class SocketIOServer {
     }
     
     public void disconnectAll() {
-        ioServer.getAllClients().forEach(client -> client.disconnect());
+        ioServer.getAllClients().forEach(ClientOperations::disconnect);
     }
 }

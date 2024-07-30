@@ -3,6 +3,7 @@ package top.saltwood.everythingAtHome.modules.cluster;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import top.saltwood.everythingAtHome.modules.server.SimpleHttpServer;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -11,7 +12,7 @@ import java.util.UUID;
 public class ClusterJwt {
     public static final String issuer = "SALTWOOD";
     public final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS512;
-    public static SecretKey key = Jwts.SIG.HS512.key().build();
+    public static SecretKey key = SimpleHttpServer.key;
     public String clusterSecret;
     public Long expiration = 86400L;
     public String clusterId;
