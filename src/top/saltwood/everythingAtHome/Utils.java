@@ -214,14 +214,14 @@ public class Utils {
         return isValid;
     }
     
-    public static double measureCluster(Cluster cluster, int size) throws IOException {
+    public static double measureCluster(Cluster cluster, int size) throws Exception {
         String sign = Utils.getSign("/measure/" + size, cluster);
         String url = "http://" + cluster.ip + ":" + cluster.port + "/measure/" + size + sign;
         double time = Utils.requestForTime(url, 1024L * 1024 * size);
         return size * 8 / (time / 1000);
     }
     
-    private static double requestForTime(String url, long size) throws IOException {
+    private static double requestForTime(String url, long size) throws Exception {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("User-Agent", Config.userAgent)
@@ -231,13 +231,13 @@ public class Utils {
         Response response = client.newCall(request).execute();
         if (response.body() != null && response.body().contentLength() != size) {
             response.close();
-            return -1;
+            throw new Exception("Body length less than " + size * 1024 * 1024);
         }
         InputStream is = null;
         if (response.body() != null) {
             is = response.body().byteStream();
             long skippedBytes = is.skip(size * 1024 * 1024);
-            if (skippedBytes < size * 1024 * 1024) return -1;
+            if (skippedBytes < size * 1024 * 1024) throw new Exception("Body length less than " + size * 1024 * 1024);
             is.close();
         }
         response.close();
