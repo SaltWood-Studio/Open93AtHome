@@ -237,7 +237,7 @@ public class Utils {
         if (response.body() != null) {
             is = response.body().byteStream();
             long skippedBytes = is.skip(size * 1024 * 1024);
-            if (skippedBytes < size * 1024 * 1024) throw new Exception("Body length less than " + size * 1024 * 1024);
+            if (skippedBytes < size * 1024 * 1024) throw new Exception("Body length less than " + size * 1024 * 1024 + ", got " + skippedBytes);
             is.close();
         }
         response.close();
