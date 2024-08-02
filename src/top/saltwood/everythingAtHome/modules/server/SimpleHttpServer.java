@@ -153,8 +153,7 @@ public class SimpleHttpServer {
                             // 发送文件
                             byte[] buffer = new byte[2048];
                             int len;
-                            int sum = 0;
-                            while ((sum += (len = fis.read(buffer))) > 0 && sum <= file.size) {
+                            while ((len = fis.read(buffer)) > -1) {
                                 stream.write(buffer, 0, len);
                             }
                             stream.flush();
@@ -163,7 +162,7 @@ public class SimpleHttpServer {
                         ex.printStackTrace(Logger.logger);
                         try {
                             byte[] bytes = ("ERR_INTERNAL_SERVER_ERROR, Exception: " + ex.getMessage()).getBytes();
-                            httpExchange.sendResponseHeaders(503, bytes.length);
+                            httpExchange.sendResponseHeaders(500, bytes.length);
                             httpExchange.getResponseBody().write(bytes);
                         } catch (Exception ignored) { }
                     }
