@@ -48,6 +48,9 @@ public class SharedData {
         clusterStorageHelper.save();
         fileStorageHelper.save();
         tokenStorageHelper.save();
+        try {
+            keyHelper.save();
+        } catch (Exception ignored) {}
         config.save();
         try {
             centerServer.update();
