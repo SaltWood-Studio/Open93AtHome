@@ -75,7 +75,7 @@ public class SocketIOServer {
             try {
                 if (!sharedData.centerServer.getFiles().isEmpty()) {
                     sharedData.centerServer.tryEnable(this.sessions.get(client.getSessionId().toString()));
-                    cluster.startWarden(sharedData.fileStorageHelper.elements);
+                    cluster.startWarden(sharedData.fileStorageHelper.getItem());
                 }
                 enabled = true;
             } catch (Exception e) {

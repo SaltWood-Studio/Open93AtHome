@@ -17,6 +17,7 @@ public class Main {
         SocketIOServer socketIOServer = new SocketIOServer(); // 9300
 
         SharedData sharedData = new SharedData(centerServer, httpServer, socketIOServer);
+        SimpleHttpServer.key = sharedData.keyHelper.getItem();
         centerServer.sharedData = sharedData;
         httpServer.sharedData = sharedData;
         socketIOServer.sharedData = sharedData;

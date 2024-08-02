@@ -3,8 +3,14 @@ package top.saltwood.everythingAtHome;
 import top.saltwood.everythingAtHome.modules.server.CenterServer;
 import top.saltwood.everythingAtHome.modules.server.SimpleHttpServer;
 import top.saltwood.everythingAtHome.modules.server.SocketIOServer;
+import top.saltwood.everythingAtHome.modules.storage.ConfigHelper;
+import top.saltwood.everythingAtHome.modules.storage.IBaseHelper;
+import top.saltwood.everythingAtHome.modules.storage.SecretKeyHelper;
+import top.saltwood.everythingAtHome.modules.storage.StorageHelper;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.nio.file.Path;
 
 
 public class SharedData {
@@ -16,23 +22,26 @@ public class SharedData {
     public StorageHelper<Cluster> clusterStorageHelper;
     public StorageHelper<FileObject> fileStorageHelper;
     public StorageHelper<Token> tokenStorageHelper;
+    public IBaseHelper<SecretKey> keyHelper;
     
-    public SharedData(CenterServer centerServer, SimpleHttpServer httpServer, SocketIOServer socketIOServer) {
+    public SharedData(CenterServer centerServer, SimpleHttpServer httpServer, SocketIOServer socketIOServer) throws Exception {
+        config = new ConfigHelper("config.json");
+        config.load();
         this.centerServer = centerServer;
         this.httpServer = httpServer;
         this.socketIOServer = socketIOServer;
         // this.executor = new TaskExecutor();
-        this.clusterStorageHelper = new StorageHelper<>("cluster.dat", Cluster.class);
+        this.clusterStorageHelper = new StorageHelper<>(Path.of(config.getItem().configDirectory, "clusters.dat").toString(), Cluster.class);
         this.clusterStorageHelper.load();
-        for (Cluster cluster : clusterStorageHelper.elements) {
+        for (Cluster cluster : clusterStorageHelper.getItem()) {
             this.centerServer.clusters.put(cluster.id, cluster);
         }
-        this.fileStorageHelper = new StorageHelper<>("files.dat", FileObject.class);
+        this.fileStorageHelper = new StorageHelper<>(Path.of(config.getItem().configDirectory, "files.dat").toString(), FileObject.class);
         fileStorageHelper.load();
-        this.tokenStorageHelper = new StorageHelper<>("tokens.dat", Token.class);
+        this.tokenStorageHelper = new StorageHelper<>(Path.of(config.getItem().configDirectory, "tokens.dat").toString(), Token.class);
         this.tokenStorageHelper.load();
-        config = new ConfigHelper("config.json");
-        config.load();
+        this.keyHelper = new SecretKeyHelper(config.getItem().configDirectory);
+        this.keyHelper.load();
     }
     
     public void saveAll() {

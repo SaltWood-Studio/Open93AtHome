@@ -22,26 +22,24 @@ public class AvroEncoder {
         o.close();
         return o.toByteArray();
     }
-    
-    public static byte[] stringToByte(String value) throws IOException {
-        ByteArrayOutputStream o = new ByteArrayOutputStream();
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-        o.write(longToByte(bytes.length));
-        o.write(bytes);
-        o.close();
-        return o.toByteArray();
-    }
-    
-    public void setElements(int count) throws IOException {
-        this.byteStream.write(longToByte(count));
+
+    public void setElements(long count) throws IOException {
+        this.setLong(count);
     }
     
     public void setLong(long value) throws IOException {
         this.byteStream.write(longToByte(value));
     }
-    
+
     public void setString(String value) throws IOException {
-        this.byteStream.write(stringToByte(value));
+        byte[] bytes = value.getBytes();
+        this.byteStream.write(longToByte(bytes.length));
+        this.byteStream.write(bytes);
+    }
+
+    public void setBytes(byte[] value) throws IOException {
+        this.byteStream.write(longToByte(value.length));
+        this.byteStream.write(value);
     }
     
     public void setEnd() {

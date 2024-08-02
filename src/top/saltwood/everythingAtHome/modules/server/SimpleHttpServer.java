@@ -147,7 +147,7 @@ public class SimpleHttpServer {
                     try {
                         FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString())) {
+                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
                             httpExchange.sendResponseHeaders(200, file.size);
                             // 发送文件
@@ -160,9 +160,12 @@ public class SimpleHttpServer {
                             stream.flush();
                         }
                     } catch (Exception ex) {
-                        byte[] bytes = "Service unavailable.".getBytes();
-                        httpExchange.sendResponseHeaders(503, bytes.length);
-                        httpExchange.getResponseBody().write(bytes);
+                        ex.printStackTrace(Logger.logger);
+                        try {
+                            byte[] bytes = ("ERR_INTERNAL_SERVER_ERROR, Exception: " + ex.getMessage()).getBytes();
+                            httpExchange.sendResponseHeaders(503, bytes.length);
+                            httpExchange.getResponseBody().write(bytes);
+                        } catch (Exception ignored) { }
                     }
                 } else {
                     httpExchange.getResponseHeaders().set("Location", url);
@@ -270,7 +273,7 @@ public class SimpleHttpServer {
                 }
                 httpExchange.sendResponseHeaders(200, file.size);
                 OutputStream stream = httpExchange.getResponseBody();
-                try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.config.filePath, file.path).toString())) {
+                try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
                     // 发送文件
                     byte[] buffer = new byte[2048];
                     int len;
@@ -288,7 +291,7 @@ public class SimpleHttpServer {
                 byte[] bytes;
                 if (query.containsKey("lastModified")) {
                     double lastModified = Double.parseDouble(query.get("lastModified"));
-                    List<FileObject> objects = sharedData.fileStorageHelper.elements.stream()
+                    List<FileObject> objects = sharedData.fileStorageHelper.getItem().stream()
                             .filter(file -> file.lastModified > lastModified)
                             .toList();
                     if (objects.isEmpty() /*|| lastModified == 0 Python 你怎么回事啊，怎么启动请求lastModified=0.0啊，What can I say? */) {
@@ -309,7 +312,7 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddCluster");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestAddCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String name = (String) object.get("name");
@@ -318,7 +321,7 @@ public class SimpleHttpServer {
                 String secret = Utils.generateRandomHexString(32);
                 Cluster cluster = new Cluster(id, secret, name, bandwidth);
                 sharedData.centerServer.clusters.put(id, cluster);
-                sharedData.clusterStorageHelper.elements.add(cluster);
+                sharedData.clusterStorageHelper.getItem().add(cluster);
                 sharedData.saveAll();
                 JSONObject response = new JSONObject();
                 response.put("id", id);
@@ -336,7 +339,7 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddCluster");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestAddCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String name = (String) object.get("name");
@@ -345,7 +348,7 @@ public class SimpleHttpServer {
                 String secret = (String) object.get("secret");
                 Cluster cluster = new Cluster(id, secret, name, bandwidth);
                 sharedData.centerServer.clusters.put(id, cluster);
-                sharedData.clusterStorageHelper.elements.add(cluster);
+                sharedData.clusterStorageHelper.getItem().add(cluster);
                 JSONObject response = new JSONObject();
                 response.put("id", id);
                 response.put("secret", secret);
@@ -363,7 +366,7 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestListCluster");
                 String response = Utils.getClustersJsonArray(sharedData.centerServer.clusters.values()).toJSONString();
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
@@ -376,7 +379,7 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListCluster");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestListCluster");
                 String response = Utils.getClustersJsonArray(sharedData.centerServer.getOnlineClusters()).toJSONString();
                 byte[] message = response.getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
@@ -390,7 +393,7 @@ public class SimpleHttpServer {
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
                 JSONArray array = new JSONArray();
-                List<Cluster> clusters = sharedData.clusterStorageHelper.elements.parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).toList();
+                List<Cluster> clusters = sharedData.clusterStorageHelper.getItem().parallelStream().sorted(Comparator.comparing(Cluster::getTraffics).reversed()).toList();
                 for (Cluster cluster : clusters) {
                     JSONObject object = Utils.getJsonObject(cluster);
                     array.add(object);
@@ -407,13 +410,13 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestRemoveCluster");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestRemoveCluster");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String id = (object.get("id") == null) ? null : (String) object.get("id");
                 JSONObject response = new JSONObject();
                 response.put("id", id);
-                response.put("isRemoved", sharedData.clusterStorageHelper.elements.removeIf(c -> c.id.equals(id)));
+                response.put("isRemoved", sharedData.clusterStorageHelper.getItem().removeIf(c -> c.id.equals(id)));
                 sharedData.saveAll();
                 byte[] message = response.toJSONString().getBytes();
                 httpExchange.sendResponseHeaders(200, message.length);
@@ -426,7 +429,7 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                FileObject file = sharedData.fileStorageHelper.elements.get(new Random().nextInt(sharedData.fileStorageHelper.elements.size()));
+                FileObject file = sharedData.fileStorageHelper.getItem().get(new Random().nextInt(sharedData.fileStorageHelper.getItem().size()));
                 byte[] bytes = JSON.toJSONBytes(file);
                 httpExchange.sendResponseHeaders(200, bytes.length);
                 httpExchange.getResponseBody().write(bytes);
@@ -436,18 +439,18 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestAddFile");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestAddFile");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
                 String hash;
-                Path filePath = Path.of(SharedData.config.config.filePath, path);
+                Path filePath = Path.of(SharedData.config.getItem().filePath, path);
                 try (FileInputStream fis = new FileInputStream(filePath.toString())) {
                     hash = FileObject.computeHash(fis);
                 }
                 long size = filePath.toFile().length();
                 long lastModified = filePath.toFile().lastModified();
-                sharedData.fileStorageHelper.elements.add(new FileObject(path, hash, size, lastModified));
+                sharedData.fileStorageHelper.getItem().add(new FileObject(path, hash, size, lastModified));
                 sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
@@ -466,11 +469,11 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestRemoveFile");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestRemoveFile");
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
-                boolean removed = sharedData.fileStorageHelper.elements.removeIf(fileObject -> fileObject.path.equals(path));
+                boolean removed = sharedData.fileStorageHelper.getItem().removeIf(fileObject -> fileObject.path.equals(path));
                 sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);
@@ -487,8 +490,8 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestListFile");
-                String response = JSON.toJSONString(sharedData.fileStorageHelper.elements);
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestListFile");
+                String response = JSON.toJSONString(sharedData.fileStorageHelper.getItem());
                 byte[] message = response.getBytes();
                 sharedData.saveAll();
                 httpExchange.sendResponseHeaders(200, message.length);
@@ -500,7 +503,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/update_files", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestUpdateFiles");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestUpdateFiles");
                 if (fileUpdateThread != null && fileUpdateThread.isAlive()) {
                     byte[] bytes = """
                             <!DOCTYPE html>
@@ -543,7 +546,7 @@ public class SimpleHttpServer {
                 }
                 fileUpdateThread = new Thread(() -> {
                     ProcessBuilder processBuilder = new ProcessBuilder();
-                    processBuilder.directory(new File(SharedData.config.config.filePath));
+                    processBuilder.directory(new File(SharedData.config.getItem().filePath));
                     processBuilder.command("git", "pull");
                     
                     try {
@@ -552,22 +555,22 @@ public class SimpleHttpServer {
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace(Logger.logger);
                     }
-                    Set<String> set = Utils.scanFiles(Path.of(SharedData.config.config.filePath).toFile().getAbsolutePath());
-                    List<FileObject> oldFiles = sharedData.fileStorageHelper.elements;
-                    sharedData.fileStorageHelper.elements = new ArrayList<>();
+                    Set<String> set = Utils.scanFiles(Path.of(SharedData.config.getItem().filePath).toFile().getAbsolutePath());
+                    List<FileObject> oldFiles = sharedData.fileStorageHelper.getItem();
+                    sharedData.fileStorageHelper.setItem(new ArrayList<>());
                     for (String file : set) {
                         FileObject f;
                         try {
                             f = new FileObject(file);
                         } catch (FileNotFoundException e) {
-                            sharedData.fileStorageHelper.elements = oldFiles;
+                            sharedData.fileStorageHelper.setItem(oldFiles);
                             return;
                         }
-                        sharedData.fileStorageHelper.elements.add(f);
+                        sharedData.fileStorageHelper.getItem().add(f);
                     }
                     sharedData.saveAll();
                     List<FileObject> newFiles = new ArrayList<>();
-                    for (FileObject file : sharedData.fileStorageHelper.elements) {
+                    for (FileObject file : sharedData.fileStorageHelper.getItem()) {
                         if (oldFiles.stream().noneMatch(f -> f.hash.equals(file.hash))) {
                             newFiles.add(file);
                         }
@@ -594,7 +597,7 @@ public class SimpleHttpServer {
         this.server.createContext("/93AtHome/save_all", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionRequestSaveAll");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionRequestSaveAll");
                 sharedData.saveAll();
                 byte[] result = "Saved.".getBytes();
                 httpExchange.sendResponseHeaders(200, result.length);
@@ -605,13 +608,13 @@ public class SimpleHttpServer {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-                Utils.verifyToken(sharedData.tokenStorageHelper.elements, httpExchange, "permissionAll");
+                Utils.verifyToken(sharedData.tokenStorageHelper.getItem(), httpExchange, "permissionAll");
                 Token token = new Token();
                 Map<String, Boolean> body = Utils.parseBodyToDictionary(new String(httpExchange.getRequestBody().readAllBytes()));
                 for (Map.Entry<String, Boolean> entry : body.entrySet()) {
                     token.setPermission(entry.getKey(), entry.getValue());
                 }
-                sharedData.tokenStorageHelper.elements.add(token);
+                sharedData.tokenStorageHelper.getItem().add(token);
                 sharedData.saveAll();
                 JSONObject object = new JSONObject();
                 object.put("token", token);

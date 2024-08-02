@@ -9,4 +9,5 @@ public class Config {
     public static final String userAgent = "93@home-ctrl/" + version;
     public String filePath = "./files";
     public Boolean debug = false;
+    public String configDirectory = "./config";
 }

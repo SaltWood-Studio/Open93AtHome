@@ -47,7 +47,7 @@ public class CenterServer {
     }
     
     public List<FileObject> getFiles() {
-        return this.sharedData.fileStorageHelper.elements;
+        return this.sharedData.fileStorageHelper.getItem();
     }
     
     public void update() throws IOException {
@@ -58,7 +58,7 @@ public class CenterServer {
     public void updateDictionary() {
         synchronized (this.pathToFile) {
             this.pathToFile.clear();
-            for (FileObject file : this.sharedData.fileStorageHelper.elements) {
+            for (FileObject file : this.sharedData.fileStorageHelper.getItem()) {
                 this.pathToFile.put(file.path, file);
                 this.hashToFile.put(file.hash, file);
             }
@@ -70,7 +70,7 @@ public class CenterServer {
     }
     
     public void refreshAvroBytes() throws IOException {
-        this.avroBytes = computeAvroBytes(this.sharedData.fileStorageHelper.elements);
+        this.avroBytes = computeAvroBytes(this.sharedData.fileStorageHelper.getItem());
     }
     
     public String requestDownload(String path) {
@@ -115,7 +115,7 @@ public class CenterServer {
         cluster.measureBandwidth = (int) bandwidth;
         
         for (int i = 0; i < 8; i++) {
-            FileObject file = Utils.random(sharedData.fileStorageHelper.elements);
+            FileObject file = Utils.random(sharedData.fileStorageHelper.getItem());
             String sign;
             String url = null;
             if (file != null) {
@@ -149,8 +149,8 @@ public class CenterServer {
     
     public void check() {
         ArrayList<FileObject> invalidFiles = new ArrayList<>();
-        for (FileObject fileObject : this.sharedData.fileStorageHelper.elements) {
-            File file = Path.of(SharedData.config.config.filePath, fileObject.path).toFile();
+        for (FileObject fileObject : this.sharedData.fileStorageHelper.getItem()) {
+            File file = Path.of(SharedData.config.getItem().filePath, fileObject.path).toFile();
             // 检查文件是否存在
             if (!file.exists()){
                 Logger.logger.logLine("File not found: " + fileObject.path);
@@ -158,6 +158,6 @@ public class CenterServer {
                 invalidFiles.add(fileObject);
             }
         }
-        invalidFiles.forEach(fileObject -> this.sharedData.fileStorageHelper.elements.removeIf(f -> f.path.equals(fileObject.path)));
+        invalidFiles.forEach(fileObject -> this.sharedData.fileStorageHelper.getItem().removeIf(f -> f.path.equals(fileObject.path)));
     }
 }
