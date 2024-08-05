@@ -22,6 +22,15 @@ public class Main {
         httpServer.sharedData = sharedData;
         socketIOServer.sharedData = sharedData;
 
+        Logger.logger.logLine("Update files");
+        try {
+            Utils.updateFiles(sharedData);
+            Logger.logger.logLine("All files synchronized");
+        } catch (Exception exception) {
+            Logger.logger.logLine("Unable to update files");
+            exception.printStackTrace(Logger.logger);
+        }
+
         // Add shutdown hook to stop the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             socketIOServer.disconnectAll();

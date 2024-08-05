@@ -544,50 +544,7 @@ public class SimpleHttpServer {
                     return;
                 }
                 fileUpdateThread = new Thread(() -> {
-                    ProcessBuilder processBuilder = new ProcessBuilder();
-                    processBuilder.directory(new File(SharedData.config.getItem().filePath));
-                    processBuilder.command("git", "pull");
-                    
-                    try {
-                        Process process = processBuilder.start();
-                        process.waitFor();
-                    } catch (IOException | InterruptedException e) {
-                        e.printStackTrace(Logger.logger);
-                    }
-                    Set<String> set = Utils.scanFiles(Path.of(SharedData.config.getItem().filePath).toFile().getAbsolutePath());
-                    List<FileObject> oldFiles = sharedData.fileStorageHelper.getItem();
-                    sharedData.fileStorageHelper.setItem(new ArrayList<>());
-                    for (String file : set) {
-                        FileObject f;
-                        try {
-                            f = new FileObject(file);
-                        } catch (FileNotFoundException e) {
-                            sharedData.fileStorageHelper.setItem(oldFiles);
-                            return;
-                        }
-                        sharedData.fileStorageHelper.getItem().add(f);
-                    }
-                    sharedData.saveAll();
-                    List<FileObject> newFiles = new ArrayList<>();
-                    for (FileObject file : sharedData.fileStorageHelper.getItem()) {
-                        if (oldFiles.stream().noneMatch(f -> f.hash.equals(file.hash))) {
-                            newFiles.add(file);
-                        }
-                    }
-                    sharedData.centerServer.getOnlineClusters().forEach(cluster -> {
-                        for (FileObject object : newFiles) {
-                            try {
-                                Thread.sleep(3000);
-                                boolean isValid = cluster.doWardenOnce(object);
-                                if (!isValid) {
-                                    cluster.isOnline = false;
-                                    break;
-                                }
-                            } catch (Exception e) {
-                                cluster.isOnline = false;
-                            }
-                        }
-                    });
+                    Utils.updateFiles(sharedData);
                 });
                 fileUpdateThread.start();
                 httpExchange.sendResponseHeaders(204, -1);
