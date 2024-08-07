@@ -18,7 +18,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -229,20 +228,6 @@ public class Utils {
                 }
             }
         }
-    }
-
-    public static String encodeUrl(String url) {
-        StringBuilder encodedUrl = new StringBuilder();
-        String[] parts = url.split("/");
-
-        for (int i = 0; i < parts.length; i++) {
-            encodedUrl.append(URLEncoder.encode(parts[i], StandardCharsets.UTF_8));
-            if (i < parts.length - 1) {
-                encodedUrl.append("/");
-            }
-        }
-
-        return encodedUrl.toString();
     }
     
     public static boolean checkCluster(String url, FileObject file) throws IOException {

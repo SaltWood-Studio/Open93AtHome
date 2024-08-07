@@ -135,20 +135,19 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                String encodedUrl = Utils.encodeUrl(httpExchange.getRequestURI().getPath().replace('+', ' '));
-                if (sharedData.centerServer.pathToFile.get(encodedUrl) == null) {
+                if (sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
                     return;
                 }
-                String url = sharedData.centerServer.requestDownload(encodedUrl);
+                String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
                 if (Math.random() < (1.0 / (sharedData.centerServer.getOnlineClusters().count() + 1)) // 随机到主控
                         || url == null) {
                     try {
-                        FileObject file = sharedData.centerServer.pathToFile.get(encodedUrl);
+                        FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.filePath).toString())) {
+                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
                             httpExchange.sendResponseHeaders(200, file.size);
                             // 发送文件
@@ -473,7 +472,7 @@ public class SimpleHttpServer {
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
-                boolean removed = sharedData.fileStorageHelper.getItem().removeIf(fileObject -> fileObject.filePath.equals(path));
+                boolean removed = sharedData.fileStorageHelper.getItem().removeIf(fileObject -> fileObject.path.equals(path));
                 sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);

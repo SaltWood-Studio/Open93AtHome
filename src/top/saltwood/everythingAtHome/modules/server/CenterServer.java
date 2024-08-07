@@ -150,10 +150,10 @@ public class CenterServer {
     public void check() {
         ArrayList<FileObject> invalidFiles = new ArrayList<>();
         for (FileObject fileObject : this.sharedData.fileStorageHelper.getItem()) {
-            File file = Path.of(SharedData.config.getItem().filePath, fileObject.filePath).toFile();
+            File file = Path.of(SharedData.config.getItem().filePath, fileObject.path).toFile();
             // 检查文件是否存在
             if (!file.exists()){
-                Logger.logger.logLine("File not found: " + fileObject.filePath);
+                Logger.logger.logLine("File not found: " + fileObject.path);
                 // 从文件存储中删除
                 invalidFiles.add(fileObject);
             }
