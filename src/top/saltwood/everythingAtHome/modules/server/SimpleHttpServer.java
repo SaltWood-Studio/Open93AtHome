@@ -135,17 +135,18 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                if (sharedData.centerServer.pathToFile.get(Utils.encodeUrl(httpExchange.getRequestURI().getPath())) == null) {
+                String encodedUrl = Utils.encodeUrl(httpExchange.getRequestURI().getPath());
+                if (sharedData.centerServer.pathToFile.get(encodedUrl) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
                     return;
                 }
-                String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
+                String url = sharedData.centerServer.requestDownload(encodedUrl);
                 if (Math.random() < (1.0 / (sharedData.centerServer.getOnlineClusters().count() + 1)) // 随机到主控
                         || url == null) {
                     try {
-                        FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
+                        FileObject file = sharedData.centerServer.pathToFile.get(encodedUrl);
                         // 主控给文件
                         try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.filePath).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
