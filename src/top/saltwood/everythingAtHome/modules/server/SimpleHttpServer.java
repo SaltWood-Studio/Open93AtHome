@@ -135,7 +135,7 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                String encodedUrl = Utils.encodeUrl(httpExchange.getRequestURI().getPath());
+                String encodedUrl = Utils.encodeUrl(httpExchange.getRequestURI().getPath()).replace("+", "%20");
                 if (sharedData.centerServer.pathToFile.get(encodedUrl) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
