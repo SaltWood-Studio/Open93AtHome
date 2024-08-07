@@ -13,18 +13,21 @@ public class FileObject {
     public String hash;
     public long size;
     public long lastModified;
+    protected String filePath;
     
     public FileObject(String path) throws FileNotFoundException {
-        this.path = path;
+        this.filePath = path;
         Path p = Path.of(SharedData.config.getItem().filePath, path);
         FileInputStream stream = new FileInputStream(p.toString());
+        this.path = Utils.encodeUrl(path);
         this.hash = computeHash(stream);
         this.size = p.toFile().length();
         this.lastModified = p.toFile().lastModified();
     }
     
     public FileObject(String path, String hash, long size, long mtime) {
-        this.path = path;
+        this.filePath = path;
+        this.path = Utils.encodeUrl(path);
         this.hash = hash;
         this.size = size;
         this.lastModified = mtime;
