@@ -147,7 +147,7 @@ public class SimpleHttpServer {
                     try {
                         FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
                         // 主控给文件
-                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
+                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.filePath).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
                             httpExchange.sendResponseHeaders(200, file.size);
                             // 发送文件
@@ -472,7 +472,7 @@ public class SimpleHttpServer {
                 String request = new String(httpExchange.getRequestBody().readAllBytes());
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
-                boolean removed = sharedData.fileStorageHelper.getItem().removeIf(fileObject -> fileObject.path.equals(path));
+                boolean removed = sharedData.fileStorageHelper.getItem().removeIf(fileObject -> fileObject.filePath.equals(path));
                 sharedData.centerServer.update();
                 JSONObject response = new JSONObject();
                 response.put("path", path);

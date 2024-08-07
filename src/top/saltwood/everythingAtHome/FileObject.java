@@ -13,7 +13,7 @@ public class FileObject {
     public String hash;
     public long size;
     public long lastModified;
-    protected String filePath;
+    public String filePath;
     
     public FileObject(String path) throws FileNotFoundException {
         this.filePath = path;
