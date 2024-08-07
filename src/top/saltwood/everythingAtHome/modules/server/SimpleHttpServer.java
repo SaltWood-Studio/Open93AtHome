@@ -135,7 +135,7 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                if (sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
+                if (sharedData.centerServer.pathToFile.get(Utils.encodeUrl(httpExchange.getRequestURI().getPath())) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
