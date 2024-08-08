@@ -56,8 +56,6 @@ public class Cluster {
     }
 
     public void startWarden(List<FileObject> files) {
-        if (this.isOnline) return;
-
         this.isOnline = true;
         this.wardenTimer = new Timer(true);
         this.wardenTimer.scheduleAtFixedRate(new TimerTask() {
@@ -77,13 +75,10 @@ public class Cluster {
     }
 
     public void stopWarden() {
-        if (!this.isOnline) return;
-
+        if (this.wardenTimer == null) return;
         this.isOnline = false;
-        if (this.wardenTimer != null) {
-            this.wardenTimer.cancel();
-            this.wardenTimer = null;
-        }
+        this.wardenTimer.cancel();
+        this.wardenTimer = null;
     }
     
     public boolean doWardenOnce(FileObject file) throws IOException {
