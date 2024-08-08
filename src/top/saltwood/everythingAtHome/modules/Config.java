@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.annotation.JSONField;
 
 public class Config {
     @JSONField(serialize = false)
-    public static final String version = "1.2.1";
+    public static final String version = "1.2.2";
     @JSONField(serialize = false)
     public static final String userAgent = "93@home-ctrl/" + version;
     public String filePath = "./files";
