@@ -4,6 +4,8 @@ import com.alibaba.fastjson2.annotation.JSONField;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Cluster {
     public String id;
@@ -23,7 +25,7 @@ public class Cluster {
     @JSONField(serialize = false)
     public int measureBandwidth;
     @JSONField(serialize = false)
-    private Thread wardenThread;
+    private Timer wardenTimer;
     public boolean isBanned;
     
     public Cluster(String id, String secret, String name, int bandwidth) {
@@ -52,27 +54,36 @@ public class Cluster {
     public int hashCode() {
         return this.id.hashCode();
     }
-    
+
     public void startWarden(List<FileObject> files) {
+        if (this.isOnline) return;
+
         this.isOnline = true;
-        if (this.wardenThread != null && this.wardenThread.isAlive()) return;
-        this.wardenThread = new Thread(() -> {
-            try {
-                while (this.isOnline) {
-                    Thread.sleep(15 * 60 * 1000);
-                    if (!this.isOnline) {
-                        break;
-                    }
+        this.wardenTimer = new Timer(true);
+        this.wardenTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
                     FileObject file = Utils.random(files);
-                    boolean isValid = this.doWardenOnce(file);
+                    boolean isValid = doWardenOnce(file);
                     if (!isValid) {
-                        this.isOnline = false;
-                        this.wardenThread = null;
-                        break;
+                        stopWarden();
                     }
+                } catch (Exception ignored) {
+                    stopWarden();
                 }
-            } catch (Exception ignored) { }
-        });
+            }
+        }, 0, 5 * 60 * 1000);
+    }
+
+    public void stopWarden() {
+        if (!this.isOnline) return;
+
+        this.isOnline = false;
+        if (this.wardenTimer != null) {
+            this.wardenTimer.cancel();
+            this.wardenTimer = null;
+        }
     }
     
     public boolean doWardenOnce(FileObject file) throws IOException {
