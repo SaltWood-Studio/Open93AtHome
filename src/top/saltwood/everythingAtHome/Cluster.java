@@ -61,15 +61,17 @@ public class Cluster {
         this.wardenTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                try {
-                    FileObject file = Utils.random(files);
-                    boolean isValid = doWardenOnce(file);
-                    if (!isValid) {
-                        stopWarden();
-                    }
-                } catch (Exception ignored) {
-                    stopWarden();
+                for (int i = 0; i < 3; i++) {
+                    try {
+                        Thread.sleep(3000);
+                        FileObject file = Utils.random(files);
+                        boolean isValid = doWardenOnce(file);
+                        if (isValid) {
+                            return;
+                        }
+                    } catch (Exception ignored) { }
                 }
+                stopWarden();
             }
         }, 0, 5 * 60 * 1000);
     }
