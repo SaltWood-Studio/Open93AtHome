@@ -165,14 +165,15 @@ public class SimpleHttpServer {
                         File f = Path.of("./dashboard", path, i).toFile();
                         if (f.exists()) {
                             try (FileInputStream fis = new FileInputStream(f)) {
-                            exchange.sendResponseHeaders(200, file.length());
-                            OutputStream os = exchange.getResponseBody();
-                            byte[] buffer = new byte[2048];
-                            while (fis.read(buffer) > 0) {
-                                os.write(buffer);
+                                exchange.sendResponseHeaders(200, file.length());
+                                OutputStream os = exchange.getResponseBody();
+                                byte[] buffer = new byte[2048];
+                                while (fis.read(buffer) > 0) {
+                                    os.write(buffer);
+                                }
+                                os.flush();
                             }
-                            os.flush();
-                        }
+                            break;
                         }
                     }
                 }
