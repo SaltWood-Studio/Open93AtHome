@@ -176,6 +176,9 @@ public class SimpleHttpServer {
                         }
                     }
                 }
+                byte[] response = ("The requested file \"" + path + "\" was not found on the server.").getBytes();
+                exchange.sendResponseHeaders(404, response.length);
+                exchange.getResponseBody().write(response);
             }
         });
 
