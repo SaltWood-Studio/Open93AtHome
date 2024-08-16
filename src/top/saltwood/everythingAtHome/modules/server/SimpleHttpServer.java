@@ -135,7 +135,7 @@ public class SimpleHttpServer {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange exchange) throws Exception {
-                exchange.getResponseHeaders().set("Location", "/dashboard");
+                exchange.getResponseHeaders().set("Location", "/dashboard/");
                 exchange.sendResponseHeaders(302, 0);
             }
         });
