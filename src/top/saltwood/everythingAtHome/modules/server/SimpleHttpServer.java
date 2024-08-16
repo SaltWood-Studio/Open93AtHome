@@ -165,7 +165,7 @@ public class SimpleHttpServer {
                         File f = Path.of("./dashboard", path, i).toFile();
                         if (f.exists()) {
                             try (FileInputStream fis = new FileInputStream(f)) {
-                                exchange.sendResponseHeaders(200, file.length());
+                                exchange.sendResponseHeaders(200, f.length());
                                 OutputStream os = exchange.getResponseBody();
                                 int bytesRead = 0;
                                 byte[] buffer = new byte[2048];
