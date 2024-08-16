@@ -179,7 +179,7 @@ public class SimpleHttpServer {
             }
         });
 
-        this.server.createContext("/files/", new HandlerWrapper() {
+        this.server.createContext("/" + SharedData.config.getItem().filePath + "/", new HandlerWrapper() {
             @Override
             public void execute(HttpExchange httpExchange) throws Exception {
                 String path = httpExchange.getRequestURI().getPath();
@@ -195,7 +195,7 @@ public class SimpleHttpServer {
                     try {
                         FileObject file = sharedData.centerServer.pathToFile.get(path);
                         // 主控给文件
-                        try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
+                        try (FileInputStream fis = new FileInputStream(Path.of("." + file.path).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
                             httpExchange.sendResponseHeaders(200, file.size);
                             // 发送文件
@@ -320,7 +320,7 @@ public class SimpleHttpServer {
                 }
                 httpExchange.sendResponseHeaders(200, file.size);
                 OutputStream stream = httpExchange.getResponseBody();
-                try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
+                try (FileInputStream fis = new FileInputStream(Path.of("." + file.path).toString())) {
                     // 发送文件
                     byte[] buffer = new byte[2048];
                     int len;
@@ -491,7 +491,7 @@ public class SimpleHttpServer {
                 JSONObject object = JSONObject.parseObject(request);
                 String path = (String) object.get("path");
                 String hash;
-                Path filePath = Path.of(SharedData.config.getItem().filePath, path);
+                Path filePath = Path.of("." + path);
                 try (FileInputStream fis = new FileInputStream(filePath.toString())) {
                     hash = FileObject.computeHash(fis);
                 }
