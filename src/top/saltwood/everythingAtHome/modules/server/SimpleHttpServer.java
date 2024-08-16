@@ -134,18 +134,66 @@ public class SimpleHttpServer {
     private void createHttpContext() {
         this.server.createContext("/", new HandlerWrapper() {
             @Override
+            public void execute(HttpExchange exchange) throws Exception {
+                exchange.getResponseHeaders().set("Location", "/dashboard");
+                exchange.sendResponseHeaders(302, 0);
+            }
+        });
+
+        this.server.createContext("/dashboard/", new HandlerWrapper() {
+            @Override
+            public void execute(HttpExchange exchange) throws Exception {
+                String path = exchange.getRequestURI().getPath().substring(11);
+                File file = Path.of("./dashboard", path).toFile();
+                if (file.isFile()) {
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        exchange.sendResponseHeaders(200, file.length());
+                        OutputStream os = exchange.getResponseBody();
+                        byte[] buffer = new byte[2048];
+                        while (fis.read(buffer) > 0) {
+                            os.write(buffer);
+                        }
+                        os.flush();
+                    }
+                } else if (file.isDirectory()) {
+                    final String[] defaultFiles = new String[] {
+                            "index.html",
+                            "index.htm",
+                            "index.php"
+                    };
+                    for (String i : defaultFiles) {
+                        File f = Path.of("./dashboard", path, i).toFile();
+                        if (f.exists()) {
+                            try (FileInputStream fis = new FileInputStream(file)) {
+                            exchange.sendResponseHeaders(200, file.length());
+                            OutputStream os = exchange.getResponseBody();
+                            byte[] buffer = new byte[2048];
+                            while (fis.read(buffer) > 0) {
+                                os.write(buffer);
+                            }
+                            os.flush();
+                        }
+                        }
+                    }
+                }
+            }
+        });
+
+        this.server.createContext("/files/", new HandlerWrapper() {
+            @Override
             public void execute(HttpExchange httpExchange) throws Exception {
-                if (sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath()) == null) {
+                String path = httpExchange.getRequestURI().getPath().substring(5);
+                if (sharedData.centerServer.pathToFile.get(path) == null) {
                     byte[] bytes = "The requested url was not found on the server.".getBytes();
                     httpExchange.sendResponseHeaders(404, bytes.length);
                     httpExchange.getResponseBody().write(bytes);
                     return;
                 }
-                String url = sharedData.centerServer.requestDownload(httpExchange.getRequestURI().getPath());
+                String url = sharedData.centerServer.requestDownload(path);
                 if (Math.random() < (1.0 / (sharedData.centerServer.getOnlineClusters().count() + 1)) // 随机到主控
                         || url == null) {
                     try {
-                        FileObject file = sharedData.centerServer.pathToFile.get(httpExchange.getRequestURI().getPath());
+                        FileObject file = sharedData.centerServer.pathToFile.get(path);
                         // 主控给文件
                         try (FileInputStream fis = new FileInputStream(Path.of(SharedData.config.getItem().filePath, file.path).toString())) {
                             OutputStream stream = httpExchange.getResponseBody();
