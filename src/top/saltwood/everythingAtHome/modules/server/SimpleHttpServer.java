@@ -167,9 +167,10 @@ public class SimpleHttpServer {
                             try (FileInputStream fis = new FileInputStream(f)) {
                                 exchange.sendResponseHeaders(200, file.length());
                                 OutputStream os = exchange.getResponseBody();
+                                int bytesRead = 0;
                                 byte[] buffer = new byte[2048];
-                                while (fis.read(buffer) > 0) {
-                                    os.write(buffer);
+                                while ((bytesRead = fis.read(buffer)) > 0) {
+                                    os.write(buffer, 0 ,bytesRead);
                                 }
                                 os.flush();
                             }
