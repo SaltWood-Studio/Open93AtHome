@@ -653,5 +653,21 @@ public class SimpleHttpServer {
                 exchange.getResponseBody().write(response);
             }
         });
+        this.server.createContext("/93AtHome/cluster/", new HandlerWrapper() {
+            @Override
+            public void execute(HttpExchange exchange) throws Exception {
+                String id = exchange.getRequestURI().getPath().substring(18);
+                var result = sharedData.statisticsHelper.getItem().get(id);
+                Calendar today = Calendar.getInstance();
+                JSONObject object = new JSONObject();
+                object.put("trafficPerHour", result.getRawBytes()[today.get(Calendar.DAY_OF_MONTH)]);
+                object.put("hitsPerHour", result.getRawHits()[today.get(Calendar.DAY_OF_MONTH)]);
+                object.put("trafficPerDay", result.getRawBytes());
+                object.put("hitsPerDay", result.getRawHits());
+                byte[] response = object.toJSONBBytes();
+                exchange.sendResponseHeaders(200, response.length);
+                exchange.getResponseBody().write(response);
+            }
+        });
     }
 }

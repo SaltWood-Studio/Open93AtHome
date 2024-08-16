@@ -3,10 +3,7 @@ package top.saltwood.everythingAtHome;
 import top.saltwood.everythingAtHome.modules.server.CenterServer;
 import top.saltwood.everythingAtHome.modules.server.SimpleHttpServer;
 import top.saltwood.everythingAtHome.modules.server.SocketIOServer;
-import top.saltwood.everythingAtHome.modules.storage.ConfigHelper;
-import top.saltwood.everythingAtHome.modules.storage.IBaseHelper;
-import top.saltwood.everythingAtHome.modules.storage.SecretKeyHelper;
-import top.saltwood.everythingAtHome.modules.storage.StorageHelper;
+import top.saltwood.everythingAtHome.modules.storage.*;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
@@ -23,7 +20,8 @@ public class SharedData {
     public StorageHelper<FileObject> fileStorageHelper;
     public StorageHelper<Token> tokenStorageHelper;
     public IBaseHelper<SecretKey> keyHelper;
-    
+    public ClusterStatisticsHelper statisticsHelper;
+
     public SharedData(CenterServer centerServer, SimpleHttpServer httpServer, SocketIOServer socketIOServer) throws Exception {
         config = new ConfigHelper("config.json");
         config.load();
@@ -36,6 +34,8 @@ public class SharedData {
         for (Cluster cluster : clusterStorageHelper.getItem()) {
             this.centerServer.clusters.put(cluster.id, cluster);
         }
+        this.statisticsHelper = new ClusterStatisticsHelper(this.centerServer.clusters.values());
+        this.statisticsHelper.load();
         this.fileStorageHelper = new StorageHelper<>(Path.of(config.getItem().configDirectory, "files.dat").toString(), FileObject.class);
         fileStorageHelper.load();
         this.tokenStorageHelper = new StorageHelper<>(Path.of(config.getItem().configDirectory, "tokens.dat").toString(), Token.class);
@@ -50,6 +50,7 @@ public class SharedData {
         tokenStorageHelper.save();
         try {
             keyHelper.save();
+            statisticsHelper.save();
         } catch (Exception ignored) {}
         config.save();
         try {

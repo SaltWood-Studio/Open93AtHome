@@ -1,5 +1,7 @@
 package top.saltwood.everythingAtHome.modules.storage;
 
+import javax.naming.OperationNotSupportedException;
+
 public interface IBaseHelper<T> {
     void save() throws Exception;
 
@@ -7,5 +9,5 @@ public interface IBaseHelper<T> {
 
     T getItem();
 
-    void setItem(T item);
+    void setItem(T item) throws Exception;
 }

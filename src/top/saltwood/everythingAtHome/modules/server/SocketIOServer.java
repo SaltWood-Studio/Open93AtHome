@@ -118,10 +118,14 @@ public class SocketIOServer {
                     Integer hits = (Integer) request.get("hits");
                     Integer bytes = (Integer) request.get("bytes");
                     Cluster cluster = sharedData.centerServer.clusters.get(this.sessions.get(client.getSessionId().toString()));
-                    cluster.hits += Math.min(cluster.pendingHits, hits);
-                    cluster.traffics += Math.min(cluster.pendingTraffics, bytes);
+                    long actualHits = Math.min(cluster.pendingHits, hits);
+                    long actualTraffics = Math.min(cluster.pendingTraffics, bytes);
+                    cluster.hits += actualHits;
+                    cluster.traffics += actualTraffics;
                     cluster.pendingHits = 0L;
                     cluster.pendingTraffics = 0L;
+                    var statistic = sharedData.statisticsHelper.getItem().get(cluster.id);
+                    statistic.add(actualHits, actualTraffics);
                     ackRequest.sendAckData((Object) new Object[]{null, Utils.getISOTime()});
                 } else {
                     ackRequest.sendAckData((Object) new Object[]{null, false});
