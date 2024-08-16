@@ -16,7 +16,7 @@ public class FileObject {
     
     public FileObject(String path) throws FileNotFoundException {
         this.path = path;
-        Path p = Path.of(SharedData.config.getItem().filePath, path);
+        Path p = Path.of("." + path);
         FileInputStream stream = new FileInputStream(p.toString());
         this.hash = computeHash(stream);
         this.size = p.toFile().length();
