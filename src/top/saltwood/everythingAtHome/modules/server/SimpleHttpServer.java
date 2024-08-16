@@ -169,7 +169,7 @@ public class SimpleHttpServer {
                                 OutputStream os = exchange.getResponseBody();
                                 int bytesRead = 0;
                                 byte[] buffer = new byte[2048];
-                                while ((bytesRead = fis.read(buffer)) > 0) {
+                                while ((bytesRead = fis.read(buffer)) != -1) {
                                     os.write(buffer, 0 ,bytesRead);
                                 }
                                 os.flush();
