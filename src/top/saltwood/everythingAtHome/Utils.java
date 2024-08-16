@@ -221,6 +221,7 @@ public class Utils {
                     if (!relativePath.startsWith("/")) {
                         relativePath = "/" + relativePath;
                     }
+                    relativePath = "/files" + relativePath;
                     filePaths.add(relativePath);
                 } else if (file.isDirectory()) {
                     // 递归扫描子目录
