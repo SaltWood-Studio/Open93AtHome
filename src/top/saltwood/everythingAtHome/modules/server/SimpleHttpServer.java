@@ -601,5 +601,56 @@ public class SimpleHttpServer {
                 httpExchange.getResponseBody().write(bytes);
             }
         });
+        this.server.createContext("/93AtHome/today", new HandlerWrapper() {
+            @Override
+            public void execute(HttpExchange httpExchange) throws Exception {
+                httpExchange.getResponseHeaders().set("Content-Type", "application/json");
+                // TODO: 做统计，填真的数据
+                byte[] fakeResponse = """
+                        {
+                            "todayBytes": [
+                                167598, 165497, 512, 367,
+                                87654, 8496, 71865, 76534,
+                                7654, 24376, 876959, 10485760,
+                                87, 21, 78643, 0,
+                                -1, -1, -1, -1,
+                                -1, -1, -1, -1,
+                            ],
+                            "todayHits": [
+                                315, 543, 342, 675,
+                                465, 213, 435, 876,
+                                1145, 1919, 543, 876,
+                                231, 564, 886, 0,
+                                -1, -1, -1, -1,
+                                -1, -1, -1, -1,
+                            ],
+                            "todayBandwidth": [
+                                167598, 165497, 512, 367,
+                                87654, 8496, 71865, 76534,
+                                7654, 24376, 876959, 10485760,
+                                -1, -1, -1, -1,
+                                -1, -1, -1, -1,
+                            ],
+                            "todayOnlines": [
+                                1, 2, 0, 3,
+                                1, 1, 1, 1,
+                                1, 1, 1, 1,
+                                2, 1, 1, 0,
+                                -1, -1, -1, -1,
+                                -1, -1, -1, -1,
+                            ]
+                        }""".getBytes();
+                httpExchange.sendResponseHeaders(200, fakeResponse.length);
+                httpExchange.getResponseBody().write(fakeResponse);
+            }
+        });
+        this.server.createContext("/93AtHome/onlines", new HandlerWrapper() {
+            @Override
+            public void execute(HttpExchange exchange) throws Exception {
+                byte[] response = ((Long) sharedData.centerServer.getOnlineClusters().count()).toString().getBytes();
+                exchange.sendResponseHeaders(200,response.length);
+                exchange.getResponseBody().write(response);
+            }
+        });
     }
 }
