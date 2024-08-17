@@ -8,6 +8,7 @@ import top.saltwood.everythingAtHome.modules.statistics.ClusterStatistics;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -59,7 +60,7 @@ public class ClusterStatisticsHelper implements IBaseHelper<Dictionary<String, C
                 AvroDecoder decoder = new AvroDecoder(fis);
                 long length = decoder.getLong();
                 for (long i = 0; i < length; i++) {
-                    String key = decoder.getString();
+                    if (!decoder.getString().equals(cluster.id)) throw new Exception("Cluster id doesn't match.");
                     ClusterStatistics value = new ClusterStatistics();
                     for (int day = 0; day < 31; day++){
                         for (int hour = 0; day < 24; day++){
@@ -72,9 +73,11 @@ public class ClusterStatisticsHelper implements IBaseHelper<Dictionary<String, C
                         }
                     }
                     if (!decoder.getEnd()) throw new Exception("Invalid statistic data.");
-                    this.statistics.put(key, value);
+                    this.statistics.put(cluster.id, value);
                 }
                 decoder.getEnd();
+            } catch (FileNotFoundException ex) {
+                this.statistics.put(cluster.id, new ClusterStatistics());
             }
         }
     }
