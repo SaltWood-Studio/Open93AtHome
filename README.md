@@ -5,6 +5,9 @@
 
 ## 简介
 
+> [!WARNING]
+> V1 版本已废弃，请使用 [V3 版本](https://github.com/SaltWood-Studio/Open93AtHome-V3)
+
 这是一个类似于 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) **主控端**的分发文件项目
 > [!TIP]
 > 本项目实际可被用于分发任何有效 Git 仓库内的文件，因此并不与 bangbang93HUB 有任何关联
